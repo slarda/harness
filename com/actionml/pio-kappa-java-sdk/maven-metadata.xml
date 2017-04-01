@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>com.actionml</groupId>
+  <artifactId>pio-kappa-java-sdk</artifactId>
+  <versioning>
+    <versions>
+      <version>0.1.0-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20170401114047</lastUpdated>
+  </versioning>
+</metadata>
