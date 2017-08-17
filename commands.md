@@ -1,72 +1,24 @@
 # Commands
 
-Harness includes an admin command line interface. It triggers the REST interface and can be run remotely as long as you point the CLI to the correct Harness server and have admin credentials. 
+Harness includes an admin command line interface. It triggers the REST interface and can be run remotely as long as you point the CLI to the correct Harness server and have admin credentials. The only exception is Starting and Stoping Harness, which must be done on the machine Harness runs on.
 
-Harness must be running for anything but the `harness start` command to work and this is also the only command that will not work remotely. All other commands work against the running Harness server.
+Harness must be running for all but the `harness start` command. All other commands work against the running Harness server.
 
 Internal to Harness are ***Engines*** that are instances of ***Templates*** made of objects like datasets and algorithms. All input data is validated by the engine, and must be readable by the algorithm. The simple basic form of workflow is; start server, add engine, input data to the engine, train (for Lambda, Kappa will auto train with each new input), query. See the workflow section for more detail.
 
-## REST Endpoints for Administration 
-          
-    PUT /engines/
-    PUT /engines/<engine-id>
-        Response: Bad REST request, engines can only be written to
-        by POST
-    
-    POST /engines/<engine-id> 
-        Request Body: JSON for engine configuration engine.json file
-        Response Body: description of engine-instance created. 
-          Success/failure indicated in the HTTP return code
-        Action: creates or modifies an existing engine, sets up algorithm 
-          and dataset
-        
-    DELETE /engines/<engine-id>
-        Action: removes the specified engine but none of the associated 
-          resources like dataset but may delete model(s). Todo: this last
-          should be avoided but to delete models separately requires a new
-          resource type.
-          
-    GET /
-        Action: returns json for server params and any status or stats
-        available. May include a list of engines active.
-    
-    GET /engines/<engine-id>
-        Action: returns json for engine params and any status or stats
-        available
+## REST Endpoints for the CLI 
 
-    GET /commands/list?engines
-        Request Body: none?
-        Response Body: list of ids and stats for defined engines
-        Action: gets a list and info, used for discovery of all resources 
-          known by the system. This command is synchronous so no need
-          to poll for updates
-        
-## REST Endpoints for Lambda Admin (TBD)
+See the [Harness REST-Spec](rest_spec.md) for all HTTP APIs. These are used by the CLI.
 
-in addition to the commands above, Lambda style learners require not only setup but batch training. So some additional commands are needed:
-
-    POST /commands/batch-train
-        Request Body: description of which engine to train and any params
-        Response Body: returns the command-id to poll via GET for
-          information about command progress
-        Action: will launch batch training of an <engine-id>. This 
-          command is asynchronous so needs to be polled for status
-          
-    Delete /commands/<command-id>
-        Action: attempts to kill the command by id and removes it
-
-    GET /commands/<command-id> 
-        Response Body: response body command status for async/long-lived command
-        
 ## The Command Line Interface
 
-Harness uses resource-ids to identify all objects in the system, engines and commands. The Engine must have a `<some-engine-json-file>` file, which contains all parameters for the engine to run including the resource-id used in as the "R" in REST as well as algorithm parameters that are specific to the Template. All Harness specific config is in `harness-env.sh` like DB addresses, ports for the Harness REST, etc. See [Harness Config](harness_config.md) for details.
+Harness uses resource-ids to identify all objects in the system, engines and commands. The Engine must have a `<some-engine-json-file>` file, which contains all parameters for Harness engine management including the resource-id used as well as algorithm parameters that are specific to the Template. All other Harness specific config is in `harness-env.sh` like DB addresses, ports for the Harness REST API, etc. See [Harness Config](harness_config.md) for details.
 
 **Things to remember:** 
 
  - The file `<some-engine-json-file>` can be named anything and put anywhere. `harness-env.sh` contains parameter overrides and must be in `/path/to/harness/bin/harness-env.sh`.
  - The working copy of all engine parameters and input data is actually in a shared database and so until you create a new engine or modify it, the engine config is not active and event data sent to the resource-id will be rejected.
- - No command works before you start the server.
+ - No command works before you start the server except for `harness start`
 
 **Commands**:
 
@@ -122,6 +74,24 @@ Following typical workflow for launching and managing the Harness server the fol
         # stop may take some time and it's usually safe to 
         # just kill the harness PID
 
+# Securing REST
+
+TLS allows the client to trust that it is connected to the correct instance of Harness. For Authentication and Authorization of the client the admin must grant certain permissions to the client. This is done through the CLI, after which the client-side SDK will be able to access the resources it has been granted access to. To make admin easier 2 roles for clients (hereafter called "Users") are pre-defined. These are "admin" and "client". An admin can access all CRUD operations on all resources so think of them as superusers. The "client" user role can perform all CRUD that is defined on Events and Queries for the resource in the grant request, but only Read access to the Engine. So a client cannot destroy an Engine instance, only and admin can.
+
+ - Grant a User "admin" or "client" permissions on a resource
+
+    ```
+    harness grant [ client | admin ] <user-id> <resource-id>
+    ```
+    The user-id must be unique to the resource owner. Think if it as an account id. The resource-id is the engine-id that is the root of all sub-resources like Events and Queries. The resource-id must be a wildcard "*" for the admin user and this command will only work if the CLI is already set up as an admin.
+    
+ - Revoke permissions.    
+
+    ```
+    harness revoke [ client | admin ] <user-id> <resource-id>
+    ```
+    The user-id must exist and be granted permission for the resource-id. Once permission is revoked Harness will refuse requests from the user-id with the appropriate response code in the [Harness REST-Spec](rest_spec.md)
+    
 # Configuration Parameters
 
 All config of Harness and it's component services is done with `harness-env` or in the service config specific to the services used.
