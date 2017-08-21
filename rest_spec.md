@@ -45,9 +45,8 @@ Most of the Harness API deals with Engines, which have Events and Queries, and C
 | GET | `/engine/<engine-id>` | none | See Item responses | JSON status information about the Engine and sub-resources | Reports Engine status **(not implemented)** |
 | GET | `/commands/` | none | See Collection responses | JSON listing of active Commands | Some commands are long lived and those still active will have status reported. **(not implemented)** |
 
-
         
-## Harness Lambda Admin APIs (WIP)
+# Harness Lambda Admin APIs (WIP)
 
 in addition to the API above, Lambda style learners require not only setup but batch training. So some additional commands are needed:
 
@@ -74,7 +73,9 @@ These APIs act as a thin proxy for communication with the Auth-Server. They are 
 
 # Auth-Server API (Private)
 
-The Auth-Server is a microservice that Harness uses to manage `User` resources and the routes and resources they are authorized to access. It is secured with connection security no TLS or Auth itself is required and no client is provided since only the Harness Rest-Server needs to access it directly.
+The Auth-Server is a microservice that Harness uses to manage `User` and `Permission` resources. Any holder of a "bearer-token" is a `User` and the `User` may have many permissions, which are the routes and resources they are authorized to access. 
+
+The Auth-Server is secured with connection level security no TLS or Auth itself is required and no SDK is provided since only the Harness Rest-Server needs to access it directly.
 
 | HTTP Verb | URL | Request Body | Response Code | Response Body | Function |
 | --- | --- | :---  | :---  | :---  | :--- |
