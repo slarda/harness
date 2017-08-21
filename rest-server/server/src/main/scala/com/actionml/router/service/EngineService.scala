@@ -45,7 +45,7 @@ class EngineServiceImpl(implicit inj: Injector) extends EngineService{
       sender() ! Invalid(NotImplemented("Not Implemented in engine"))
 
     case GetEngines(resourceId) ⇒
-      log.info("Get all engines")
+      log.info("Get one engine status")
       sender() ! admin.list(resourceId).map(_.asJson)
 
     case CreateEngine(engineJson) ⇒
