@@ -47,7 +47,7 @@ Most of the Harness API deals with Engines, which have Events and Queries, and C
 
 
         
-## REST Endpoints for Lambda Admin (TBD)
+## Harness Lambda Admin APIs (WIP)
 
 in addition to the API above, Lambda style learners require not only setup but batch training. So some additional commands are needed:
 
@@ -57,22 +57,24 @@ in addition to the API above, Lambda style learners require not only setup but b
 | GET | `/commands/<command-id>` | none | See Item responses | JSON Status of command | Get a report on the progress of an asynchronous long lived command like `batch-train` which may run for hours **(not implemented)** |
 | DELETE | `/commands/<command-id>` | none | See Item responses | Response to Command being stopped and removed | Stop an asynchronous long-lived command **(not implemented)** |
 
-# User Creation And Authorization Rules
+# Harness User And Permission APIs
 
-These APIs allow the admin user to create new users with access to certain resource types. These APIs act as a thin proxy for communication with the Authe-Server, which implements calls for OAuth2 bearer token Authentication and Authorization.
+These APIs allow the admin user to create new users granting access to certain resource types. 
+
+These APIs act as a thin proxy for communication with the Auth-Server. They are provided as endpoints on the main Harness rest-server for simplicity but are actually implemented in the Auth-Server. Consider these as the public APIs for the Auth-Server. They manage "Users" and "Permissions". The Private part of the Auth-Server deals only with authorization requests and is in the next section. 
 
 | HTTP Verb | URL | Request Body | Response Code | Response Body | Function |
 | --- | --- | :---  | :---  | :---  | :--- |
-| POST | `/users` | `{"roleSetId": "client\|admin","resourceId": "*\|some id"}` | see Collection responses |  `{"userId": "user-id", "roleSetId": "client\|admin","resourceId": "*\|some id"}` | create the User, assign a user-id and optionally grant permissions. |
+| POST | `/users` | `{"roleSetId": "client\|admin","resourceId": "*\|<some-engine-id>"}` | see Collection responses |  `{"userId": "user-id", "roleSetId": "client\|admin", "bearerToken": "token", "resourceId": "*\|<some-engine-id>"}` | create the User, assign a user-id and optionally grant permissions. |
 | GET | `/users` | none | see Collection responses |  `[{"userId": "user-id", "roleSetId": "client \| admin", "engines": ["engine-id-1", "engine-id-2", ...]}, ...]` | List all users, roles, and resources they have access to |
 | DELETE | `/users/user-id` | none | see Item responses |  `{"userId": "user-id"}` | Delete the User and return their user-id with success. |
-| GET | `/users/user-id` | none | see Item responses |  `{"userId": "user-id", "roleSetId": "client \| admin", "engines": ["engine-id-1", "engine-id-2", ...]}` | List the user's Engines buy ID along with the role name they have and other info about the user. |
-| POST | `/users/user-id/permissions` | `{"userId": "user-id", "roleSetId": "client\|admin","resourceId": "*\|some id"}` | See Collection responses | `{"userId": "user_id", “bearerToken”: "token"}` | Create a new user and assign a bearer token and user-id, setup internal management of the user-id that does not require saving the bearer token and attached the named `roleSet` for the `resource-id` to the new user |
-| DELETE | `/users/user-id/permissions` | `{"roleSetId": "client\|admin", "resourceId": "*\|<some-user-id>"}` | See Item responses | `{"bearerToken": "token"}` | Removes the user and all access rules from the system |
+| GET | `/users/user-id` | none | see Item responses |  `{"userId": "user-id", "roleSetId": "client \| admin", "engines": ["engine-id-1", "engine-id-2", ...]}` | List the user's Engines by ID along with the role set they have and potentially other info about the user. |
+| POST | `/users/user-id/permissions` | `{"userId": "user-id", "roleSetId": "client\|admin","resourceId": "*\|<some-engine-id>"}` | See Collection responses | `{"userId": "user_id"}` | Create a new user and assign a bearer token and user-id, setup internal management of the user-id that does not require saving the bearer token and attached the named `roleSet` for the `resource-id` to the new user |
+| DELETE | `/users/user-id/permissions/permission-id` | `{"roleSetId": "client\|admin", "resourceId": "*\|<some-engine-id>"}` | See Item responses | `{"userId": "user_id", "roleSetId": "client\|admin", "resourceId": "*\|<some-engine-id>" }` | Removes a specific permission from a user |
 
-# Auth-Server REST API (Private)
+# Auth-Server API (Private)
 
-The Auth-Server is a microservice that Harness uses to manage `User` resources and the routes and resources they are authorized to access. It is secured with connection security no TLS or Auth itself is required and no client is provided since the users need never access it directly.
+The Auth-Server is a microservice that Harness uses to manage `User` resources and the routes and resources they are authorized to access. It is secured with connection security no TLS or Auth itself is required and no client is provided since only the Harness Rest-Server needs to access it directly.
 
 | HTTP Verb | URL | Request Body | Response Code | Response Body | Function |
 | --- | --- | :---  | :---  | :---  | :--- |
