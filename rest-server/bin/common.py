@@ -10,6 +10,7 @@ parser.add_argument("-c", "--config", type=str, default=None)
 parser.add_argument("--data-delete", "-d", dest='delete', default=False, action='store_true')
 parser.add_argument("--force", "-f", default=False, action='store_true')
 parser.add_argument("--input", "-i", type=str, default=None)
+parser.add_argument("--all-engines", "-a", default=False, action='store_true')
 args = parser.parse_args()
 
 
@@ -50,6 +51,13 @@ def id_or_config():
 
     return engine_id, config
 
+
+def id_or_none():
+
+    if args.all is not None:
+        return None, True
+    else:
+        return args.engine_id, False
 
 harness_host = os.getenv('REST_SERVER_HOST', 'localhost')
 harness_port = os.getenv('REST_SERVER_PORT', 9090)

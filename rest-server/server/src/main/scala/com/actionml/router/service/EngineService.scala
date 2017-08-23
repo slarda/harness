@@ -45,7 +45,7 @@ class EngineServiceImpl(implicit inj: Injector) extends EngineService{
       sender() ! Invalid(NotImplemented("Not Implemented in engine"))
 
     case GetEngines(resourceId) ⇒
-      log.info("Get one engine status")
+      log.info("Get one or all engine status")
       sender() ! admin.list(resourceId).map(_.asJson)
 
     case CreateEngine(engineJson) ⇒
@@ -68,7 +68,7 @@ class EngineServiceImpl(implicit inj: Injector) extends EngineService{
 
 sealed trait EngineAction
 case class GetEngine(engineId: String) extends EngineAction
-case class GetEngines(resourceId: String) extends EngineAction
+case class GetEngines(resourceId: Option[String]) extends EngineAction
 case class CreateEngine(engineJson: String) extends EngineAction
 case class UpdateEngineWithConfig(engineId: String, engineJson: String, dataDelete: Boolean, force: Boolean, input: String) extends EngineAction
 case class UpdateEngineWithId(engineId: String, dataDelete: Boolean, force: Boolean, input: String) extends EngineAction

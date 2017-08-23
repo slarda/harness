@@ -31,5 +31,21 @@ elif args.action == 'delete':
     except HttpError as err:
         print_failure(err, 'Error deleting engine id={}'.format(engine_id))
 
+elif args.action == 'status':
+    if args.engine_id is not None:
+        engine_id = args.engine_id
+    else:
+        engine_id = None
+
+    try:
+        if engine_id is not None:
+            res = engine_client.get(engine_id=engine_id)
+            print_success(res, 'Status for engine id={}.'.format(engine_id))
+        else:
+            res = engine_client.get()
+            print_success(res, 'Status for all Engines.')
+    except HttpError as err:
+        print_failure(err, 'Error getting status')
+
 else:
     print_warning("Unknown action: %{}".format(args.action))

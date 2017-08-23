@@ -111,8 +111,12 @@ class MongoAdministrator extends Administrator with JsonParser with Mongo {
     }
   }
 
-  override def list(resourceType: String): Validated[ValidateError, String] = {
-    Valid("\n\n" + engines.mapValues(_.status()).toSeq.mkString("\n\n"))
+  override def list(resourceType: Option[String]): Validated[ValidateError, String] = {
+    if (resourceType.nonEmpty) {
+      Valid(engines(resourceType.get).status().toString)
+    } else {
+      Valid(engines.mapValues(_.status()).toSeq.mkString("\n"))
+    }
   }
 
   override def updateEngine(

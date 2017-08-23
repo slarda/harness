@@ -36,6 +36,8 @@ This also does not define the CLI commands that can invoke the APIs&mdash;see [C
 
 Most of the Harness API deals with Engines, which have Events and Queries, and Commands, which perform jobs on Harness resources.
 
+For "client" type users, POSTing to `/engines/<engine-id>/events` and `/engines/<engine-id>/queries` will be the primary endpoints of interest, the rest typically require "admin" user permissions with some minor exceptions.
+
 | HTTP Verb | URL | Request Body | Response Code | Response Body | Function |
 | --- | --- | :---  | :---  | :---  | :--- |
 | GET | / | none  | See Collection responses | JSON describing Harness server status  | Used to get server config information, currently defined Engines, and other pertinent information about the ML/AI operations **minimally implemented** |
@@ -43,6 +45,8 @@ Most of the Harness API deals with Engines, which have Events and Queries, and C
 | GET | `/engines/` | none | See Collection responses | Engine descriptions for Engines the user has Read access to | This works like a list command to show all resources the user can read. For the Admin this would show all Engines in the system. **(not implemented)** |
 | DELETE | `/engine/<engine-id>` | none | See Item responses | none | Remove and destroy all sub-resources (data and model) and config for the Engine |
 | GET | `/engine/<engine-id>` | none | See Item responses | JSON status information about the Engine and sub-resources | Reports Engine status **(not implemented)** |
+| POST | `/engine/<engine-id>/events` | none | See Collection responses | JSON event formulated as defined in the Engine docs | Creates an event but may not report its ID since the Event may not be persisted, only used in the algorithm. |
+| POST | `/engine/<engine-id>/queries` | none | See Collection responses | JSON query formulated as defined in the Engine docs | Creates a query and returns the result(s) as defined in the Engine docs |
 | GET | `/commands/` | none | See Collection responses | JSON listing of active Commands | Some commands are long lived and those still active will have status reported. **(not implemented)** |
 
         

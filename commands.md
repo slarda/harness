@@ -22,18 +22,23 @@ Harness uses resource-ids to identify all objects in the system, engines and com
 
 **Commands**:
 
-Set your path to include to the directory containing the `harness` script. Commands not implemented in Harness v0.0.1 are marked with a dagger character (&dagger;)
+Set your path to include to the directory containing the `harness` script. Commands not implemented in Harness are marked with a dagger character (**&dagger;**)
 
- - `harness start` starts the harness server based on configuration in `harness-env`, which is expected to be in the same directory as `harness`, all other commands require the service to be running, it is always started as a daemon/background process. All previously configured engines are started in the state they were in when harness was last run.
- - `harness stop` gracefully stops harness and all engines.
- - `harness add -c <some-engine-json-file>` creates and starts an instance of the template defined in `some-engine-json-file`, which is a path to the template specific parameters file.
- - `harness update [-c <some-engine-json-file> | <some-resource-id>] [-d | --data-delete] [-i <some-events-json-file> | -i <some-directory>]` stops the engine, modifies the parameters and restarts the engine. If `-d` is set this removes the dataset and model for the engine so it will treat all new data as if it were the first received. This command will reset the engine to ground original state with the `-d` if there are no changes to the parameters in the json file. The `-i` option imports events from files like the `harness import ...` command. 
- - `harness delete [<some-resource-id>]` The engine and all accumulated data will be deleted and the engine stopped. No persistent record of the engine will remain.
- - `harness import [<some-resource-id> | -c <some-engine-json-file>] [-i <some-directory> | -i <some-file>]` This is typically used to replay previously mirrored events or bootstrap events created from application logs. It is safest to import into a new engine since some events cause DB changes and others have no side effects. This command is a shortcut to `harness update`
- - &dagger;`harness train [-c <some-engine-json-file> | <some-resource-id>]` in the Lambda model this trains the algorithm on all previously accumulated data.
- - `harness status [[<some-resource-id>]]` prints a status message for harness or for the engine specified.
- - &dagger;`harness list engines` lists engines and stats about them
- - &dagger;`harness list commands` lists any currently active long running commands like `harness train ...`
+ - **`harness start`** starts the harness server based on configuration in `harness-env`, which is expected to be in the same directory as `harness`, all other commands require the service to be running, it is always started as a daemon/background process. All previously configured engines are started in the state they were in when harness was last run.
+
+ - **`harness stop`** gracefully stops harness and all engines.
+ - **`harness add <some-engine-json-file>`** creates and starts an instance of the template defined in `some-engine-json-file`, which is a path to the template specific parameters file.
+ - **&dagger;**`harness update [-c <some-engine-json-file> | <some-resource-id>] [-d | --data-delete] [-i <some-events-json-file> | -i <some-directory>]` stops the engine, modifies the parameters and restarts the engine. If `-d` is set this removes the dataset and model for the engine so it will treat all new data as if it were the first received. This command will reset the engine to ground original state with the `-d` if there are no changes to the parameters in the json file. The `-i` option imports events from files like the `harness import ...` command. 
+    
+    **Note**: The `update` command may not be implemented since its side-effects may be too complicated as to be useful.
+      
+ - **`harness delete [<some-resource-id>]`** The engine and all accumulated data will be deleted and the engine stopped. No persistent record of the engine will remain.
+ - **`harness import <some-resource-id> [<some-directory> | <some-file>]`** This is typically used to replay previously mirrored events or bootstrap events created from application logs. It is safest to import into an empty new engine since some events cause DB changes and others have no side effects. **Note**: `-i` may be required before the file or directory name. run `harness help` for current implementation.
+ - **&dagger;**`harness train [-c <some-engine-json-file> | <some-resource-id>]` in the Lambda model this trains the algorithm on all previously accumulated data.
+ - **`harness status`** prints a status message for harness.
+ - **`harness status engines`** lists all engines and stats about them
+ - **`harness status engines <engine-id>`** status of engine-id
+ - **&dagger;**`harness status commands` lists any currently active long running commands like `harness train ...`
 
 # Harness Workflow
 
@@ -58,9 +63,9 @@ Following typical workflow for launching and managing the Harness server the fol
         # use -d if you want to discard any previously collected data 
         # or model
 
-    &dagger;This command is not implemented yet so use `harness delete` and `harness add` for updates but be aware that all data will be destroyed during `delete`.    
+    **&dagger;**This command is not implemented yet so use `harness delete` and `harness add` for updates but be aware that all data will be destroyed during `delete`.    
 
- 1. &dagger;Once the engine is created and receiving input through it's REST `events` input endpoint any Kappa style learner will respond to the REST engine `queries` endpoint. To use a Lambda style (batch/background) style learner or to bulk train the Kappa on saved up input run:
+ 1. **&dagger;**Once the engine is created and receiving input through it's REST `events` input endpoint any Kappa style learner will respond to the REST engine `queries` endpoint. To use a Lambda style (batch/background) style learner or to bulk train the Kappa on saved up input run:
     
         harness train <some-engine.json>
         
