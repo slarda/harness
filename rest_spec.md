@@ -79,6 +79,6 @@ The Auth-Server is secured with connection level security no TLS or Auth itself 
 
 | HTTP Verb | URL | Request Body | Response Code | Response Body | Function |
 | --- | --- | :---  | :---  | :---  | :--- |
-| POST | `auth/token` | `grant_type=password&username=user-id&password=granted-token`, also app server's credentials should be provided by Authorization [Basic header](https://tools.ietf.org/html/rfc6749#section-4.3) | 200 or 401 | `{"access_token": "string", "token_type": "", "refresh_token": "optional string"}` | authenticates user's access and returns a session token |
+| POST | `auth/token` | `grant_type=password&username=user-id&password=granted-token`, also app server's credentials should be provided by Authorization [Basic header](https://tools.ietf.org/html/rfc6749#section-4.3) | 200 or 401 | `{"access_token": "string", "token_type": "bearer", "refresh_token": "optional string"}` | authenticates user's access and returns a session token |
 | POST | `auth/authorize` | `{"accessToken": "string"`, ` "roleId": "string"`, ` "resourceId": "string"}` | 200 or 403 | `{"success": "true"}` | Given a session/access token authorize the access requested or return an error code |
   
