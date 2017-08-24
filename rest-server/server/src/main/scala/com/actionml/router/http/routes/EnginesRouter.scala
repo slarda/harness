@@ -42,8 +42,9 @@ class EnginesRouter(implicit inj: Injector) extends BaseRouter {
   private val engineService = inject[ActorRef]('EngineService)
 
   override val route: Route = rejectEmptyResponse {
-    (pathPrefix("engines") & extractLog) { log ⇒
+    (pathPrefix("engines") & extractLog) { implicit log ⇒
       pathEndOrSingleSlash {
+        getEngines ~
         createEngine(log)
       } ~ pathPrefix(Segment) { engineId ⇒
         pathEndOrSingleSlash {
@@ -60,7 +61,15 @@ class EnginesRouter(implicit inj: Injector) extends BaseRouter {
     }
   }
 
-  private def createEngine(log: LoggingAdapter): Route = asJson { engineConfig =>
+  private def getEngines(implicit log: LoggingAdapter): Route = get {
+    log.info("Get engines information")
+    completeByValidated(StatusCodes.OK) {
+      (engineService ? GetEngines()).mapTo[Response]
+    }
+  }
+
+
+  private def createEngine(log: LoggingAdapter): Route = (post & asJson) { engineConfig =>
     log.info("Create engine: {}", engineConfig)
     completeByValidated(StatusCodes.Created) {
       (engineService ? CreateEngine(engineConfig.toString())).mapTo[Response]

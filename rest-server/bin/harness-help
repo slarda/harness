@@ -10,7 +10,7 @@ echo -e "   ${CYAN}harness stop${NC}"
 echo -e "       Gracefully stops harness and all engines."
 echo ""
 
-echo -e "   ${CYAN}harness add -c <some-engine.json>${NC}"
+echo -e "   ${CYAN}harness add <some-engine.json>${NC}"
 echo -e "       Create a new engine and set it's configuration"
 echo ""
 

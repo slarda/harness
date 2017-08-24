@@ -52,13 +52,6 @@ def id_or_config():
     return engine_id, config
 
 
-def id_or_none():
-
-    if args.all is not None:
-        return None, True
-    else:
-        return args.engine_id, False
-
 harness_host = os.getenv('REST_SERVER_HOST', 'localhost')
 harness_port = os.getenv('REST_SERVER_PORT', 9090)
 

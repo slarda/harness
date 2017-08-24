@@ -20,7 +20,7 @@ if [ -z "$ENGINE_ID" ]; then
 fi
 
 if [ ${ENGINE_ID} = "-a" ]; then
-    echo -e "${CYAN}Getting status for all Engines${NC}"
+    echo -e "${CYAN}Getting status for all Engines:${NC}"
     PYTHON_ARGS="status --all-engines"
 
     echo -e "${CYAN}Run ${HARNESS_HOME}/bin/engine.py ${PYTHON_ARGS}${NC}"
@@ -30,7 +30,7 @@ if [ ${ENGINE_ID} = "-a" ]; then
 fi
 
 if [ ! -z ${ENGINE_ID} ]; then
-    echo -e "${CYAN}Getting status for Engine ${ENGINE_ID}${NC}"
+    echo -e "${CYAN}Getting status for engine-id: ${ENGINE_ID}${NC}"
     PYTHON_ARGS="status ${ENGINE_ID}"
 
     echo -e "${CYAN}Run ${HARNESS_HOME}/bin/engine.py ${PYTHON_ARGS}${NC}"

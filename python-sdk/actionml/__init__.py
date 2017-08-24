@@ -284,7 +284,7 @@ class EngineClient(BaseClient):
         self.path = "/engines"
         super(EngineClient, self).__init__(url, threads, qsize, timeout)
 
-    def async_get(self, engine_id=None):
+    def async_get(self, engine_id):
         """
         Asynchronously get an engine info from Harness Server.
         :param engine_id:
@@ -293,12 +293,12 @@ class EngineClient(BaseClient):
         if engine_id is None:
             request = AsyncRequest("GET", self.path)
         else:
-            request = AsyncRequest("GET", self._add_segment(self.path, engine_id))
+            request = AsyncRequest("GET", self._add_segment(engine_id))
         request.set_response_handler(self._ok_response_handler)
         self._connection.make_request(request)
         return request
 
-    def get(self, engine_id=None):
+    def get(self, engine_id):
         return self.async_get(engine_id).get_response()
 
     def async_create(self, data):
