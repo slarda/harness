@@ -62,27 +62,27 @@ in addition to the API above, Lambda style learners require not only setup but b
 
 # Harness User And Permission APIs
 
-These APIs allow the admin user to create new users granting access to certain resource types. 
+These APIs allow the admin user to create new users granting access to certain resource types.
 
-These APIs act as a thin proxy for communication with the Auth-Server. They are provided as endpoints on the main Harness rest-server for simplicity but are actually implemented in the Auth-Server. Consider these as the public APIs for the Auth-Server. They manage "Users" and "Permissions". The Private part of the Auth-Server deals only with authorization requests and is in the next section. 
+These APIs act as a thin proxy for communication with the Auth-Server. They are provided as endpoints on the main Harness rest-server for simplicity but are actually implemented in the Auth-Server. Consider these as the public APIs for the Auth-Server. They manage "Users" and "Permissions". The Private part of the Auth-Server deals only with authorization requests and is in the next section.
 
 | HTTP Verb | URL | Request Body | Response Code | Response Body | Function |
 | --- | --- | :---  | :---  | :---  | :--- |
-| POST | `/users` | `{"roleSetId": "client\|admin","resourceId": "*\|<some-engine-id>"}` | see Collection responses |  `{"userId": "user-id", "roleSetId": "client\|admin", "bearerToken": "token", "resourceId": "*\|<some-engine-id>"}` | create the User, assign a user-id and optionally grant permissions. |
+| POST | `/users` | `{"roleSetId": "client\|admin", "resourceId": "*\|some id"}` | See Collection responses | `{"userId": "user_id", “bearerToken”: "token"}` | Create a new user and assign a bearer token and user-id, setup internal management of the user-id that does not require saving the bearer token and attached the named `roleSet` for the `resource-id` to the new user |
 | GET | `/users` | none | see Collection responses |  `[{"userId": "user-id", "roleSetId": "client \| admin", "engines": ["engine-id-1", "engine-id-2", ...]}, ...]` | List all users, roles, and resources they have access to |
 | DELETE | `/users/user-id` | none | see Item responses |  `{"userId": "user-id"}` | Delete the User and return their user-id with success. |
 | GET | `/users/user-id` | none | see Item responses |  `{"userId": "user-id", "roleSetId": "client \| admin", "engines": ["engine-id-1", "engine-id-2", ...]}` | List the user's Engines by ID along with the role set they have and potentially other info about the user. |
-| POST | `/users/user-id/permissions` | `{"userId": "user-id", "roleSetId": "client\|admin","resourceId": "*\|<some-engine-id>"}` | See Collection responses | `{"userId": "user_id"}` | Create a new user and assign a bearer token and user-id, setup internal management of the user-id that does not require saving the bearer token and attached the named `roleSet` for the `resource-id` to the new user |
+| POST | `/users/user-id/permissions` | `{"userId": "user-id", "roleSetId": "client\|admin","resourceId": "*\|some id"}` | See Collection responses |  | Grant named `roleSet` for the `resource-id` to the user with `user-id` |
 | DELETE | `/users/user-id/permissions/permission-id` | `{"roleSetId": "client\|admin", "resourceId": "*\|<some-engine-id>"}` | See Item responses | `{"userId": "user_id", "roleSetId": "client\|admin", "resourceId": "*\|<some-engine-id>" }` | Removes a specific permission from a user |
 
 # Auth-Server API (Private)
 
-The Auth-Server is a microservice that Harness uses to manage `User` and `Permission` resources. Any holder of a "bearer-token" is a `User` and the `User` may have many permissions, which are the routes and resources they are authorized to access. 
+The Auth-Server is a microservice that Harness uses to manage `User` and `Permission` resources. Any holder of a "bearer-token" is a `User` and the `User` may have many permissions, which are the routes and resources they are authorized to access.
 
 The Auth-Server is secured with connection level security no TLS or Auth itself is required and no SDK is provided since only the Harness Rest-Server needs to access it directly.
 
 | HTTP Verb | URL | Request Body | Response Code | Response Body | Function |
 | --- | --- | :---  | :---  | :---  | :--- |
-| POST | `auth/token` | `grant_type=password&username=user-id&password=granted-token`, also app server's credentials should be provided by Authorization [Basic header](https://tools.ietf.org/html/rfc6749#section-4.3) | 200 or 401 | `{"access_token": "string", "token_type": "bearer", "refresh_token": "optional string"}` | authenticates user's access and returns a session token |
-| POST | `auth/authorize` | `{"accessToken": "string"`, ` "roleId": "string"`, ` "resourceId": "string"}` | 200 or 403 | `{"success": "true"}` | Given a session/access token authorize the access requested or return an error code |
-  
+| POST | `/auth/token` | `grant_type=password&username=user-id&password=granted-token`, also app server's credentials should be provied by Authorization Basic header (see [https://tools.ietf.org/html/rfc6749#section-4.3] for details) | 200 or 401 | `{"access_token": "string", "token_type": "", "refresh_oken": "optional string"}` | authenticates user's access and returns a session token |
+| POST | `/authorize` | `{"accessToken": "string"`, ` "roleId": "string"`, ` "resourceId": "string"}` | 200 or 403 | `{"success": "true"}` | Given a session/access token authorize the access requested or return an error code |
+

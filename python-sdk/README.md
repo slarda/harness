@@ -70,12 +70,13 @@ There are Python scripts that send test events and make queries but to make thes
 
 **Prerequisites**:
 
- - install Harness
+ - install Harness using the [install directions](../install.md)
  - install Python 3.x
  - install the "actionml" Python package from the python-sdk directory where this README is located using `python setup.py install`
 
-The `integration-test` should do the rest, look for obvious errors in the output, there is no test of output yet.
+The `integration-test` should do the rest, look for obvious errors or differences in expected and test output.
 
+    $ cd harness/python-sdk
     $ ./integration-test
  
 
