@@ -16,9 +16,13 @@ If an authenticated user has been granted access permission for resource, then t
 
 # OAuth2
 
-We use OAuth2 "bearer tokens" for Auth. Here is the flow between client and Harness server during Auth. 
+We use OAuth2 "bearer tokens" for Auth. The Bearer Token is used as credentials like a username+password. It is created by the Harness Server, using the Auth-server as a microservice, by an admin user then conveyed to the user of Harness. This allows separation of Engines in a multi-tenant manner with some Engines accessible to some Users and other Engines inaccessible to protect one User's data from another User accessing it.
 
-![](https://docs.google.com/drawings/d/1_uPiP5UGkphF62PsdIM0Zu8Ugbp4XAKnLYP5CyKrfLo/pub?w=1148&h=572) 
+Some of this data flow is done by humans 
+
+Here is the flow between client and Harness server during Auth. 
+
+![](https://docs.google.com/drawings/d/e/2PACX-1vSu_7RpWjYZhhxPfZIvzLfMoCL0traBHs_ATWsEQXeGpYZE6taMMqYFfO-ahcyOQ52Me5zLrTt_tJPM/pub?w=1741&h=2415) 
 
  1. Client sends authorization request to Harness REST server. It directs authorization request to Harness authorization server.
  1. Harness authorization server authenticates REST server via its credentials, searches for authorization rules for that client and REST server and then
