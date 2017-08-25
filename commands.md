@@ -27,20 +27,28 @@ Set your path to include to the directory containing the `harness` script. Comma
  - **`harness start`** starts the harness server based on configuration in `harness-env`, which is expected to be in the same directory as `harness`, all other commands require the service to be running, it is always started as a daemon/background process. All previously configured engines are started in the state they were in when harness was last run.
 
  - **`harness stop`** gracefully stops harness and all engines.
+
+# Engine Management
+
  - **`harness add <some-engine-json-file>`** creates and starts an instance of the template defined in `some-engine-json-file`, which is a path to the template specific parameters file.
- - **&dagger;**`harness update [-c <some-engine-json-file> | <some-resource-id>] [-d | --data-delete] [-i <some-events-json-file> | -i <some-directory>]` stops the engine, modifies the parameters and restarts the engine. If `-d` is set this removes the dataset and model for the engine so it will treat all new data as if it were the first received. This command will reset the engine to ground original state with the `-d` if there are no changes to the parameters in the json file. The `-i` option imports events from files like the `harness import ...` command. 
-    
-    **Note**: The `update` command may not be implemented since its side-effects may be too complicated as to be useful.
-      
  - **`harness delete [<some-resource-id>]`** The engine and all accumulated data will be deleted and the engine stopped. No persistent record of the engine will remain.
  - **`harness import <some-resource-id> [<some-directory> | <some-file>]`** This is typically used to replay previously mirrored events or bootstrap events created from application logs. It is safest to import into an empty new engine since some events cause DB changes and others have no side effects. **Note**: `-i` may be required before the file or directory name. run `harness help` for current implementation.
  - **&dagger;**`harness train [-c <some-engine-json-file> | <some-resource-id>]` in the Lambda model this trains the algorithm on all previously accumulated data.
  - **`harness status`** prints a status message for harness.
- - **`harness status engines`** lists all engines and stats about them
- - **`harness status engines <engine-id>`** status of engine-id
+ - **`harness status -a`** lists all engines and stats about them
+ - **`harness status <engine-id>`** status of and Engine
  - **&dagger;**`harness status commands` lists any currently active long running commands like `harness train ...`
 
-# Harness Workflow
+# User and Permission Management
+
+When using Authentication with Harness we define Users and give them Permissions. Two Permissions are predefined: client and admin. Clients are typically granted access to any number of Engines by ID and all of their sub-resources: Events and Queries. The admin has access to all parts of Harness. In order to manage Users and Permissions the User must be an admin so these commands will only work for an admin.
+
+ - **`harness user-add`** returns the bearer token credentials for the user and a unique user-id.
+ - **`harness user-delete <user-id>`** removes the user and any permissions they have, in effect revoking their bearer token.
+ - **`harness grant <user-id> [client | admin] [<engine-id> \| *]`** grants client or admin access to an engine for a user-id
+ - **`harness revoke <user-id> [<engine-id> \| *]`** revokes all permissions for the engine-id
+
+# Harness Workflow (no auth)
 
 Following typical workflow for launching and managing the Harness server the following commands are available:
 
@@ -57,14 +65,6 @@ Following typical workflow for launching and managing the Harness server the fol
         # the engine-id in the json file will be used for the resource-id
         # in the REST API
         
- 1. The `<some-engine.json>` file is required above but it can be modifed with:
-
-        harness update <some-engine.json>
-        # use -d if you want to discard any previously collected data 
-        # or model
-
-    **&dagger;**This command is not implemented yet so use `harness delete` and `harness add` for updates but be aware that all data will be destroyed during `delete`.    
-
  1. **&dagger;**Once the engine is created and receiving input through it's REST `events` input endpoint any Kappa style learner will respond to the REST engine `queries` endpoint. To use a Lambda style (batch/background) style learner or to bulk train the Kappa on saved up input run:
     
         harness train <some-engine.json>
@@ -79,23 +79,9 @@ Following typical workflow for launching and managing the Harness server the fol
         # stop may take some time and it's usually safe to 
         # just kill the harness PID
 
-# Securing REST
+# Authorization
 
-TLS allows the client to trust that it is connected to the correct instance of Harness. For Authentication and Authorization of the client the admin must grant certain permissions to the client. This is done through the CLI, after which the client-side SDK will be able to access the resources it has been granted access to. To make admin easier 2 roles for clients (hereafter called "Users") are pre-defined. These are "admin" and "client". An admin can access all CRUD operations on all resources so think of them as superusers. The "client" user role can perform all CRUD that is defined on Events and Queries for the resource in the grant request, but only Read access to the Engine. So a client cannot destroy an Engine instance, only and admin can.
-
- - Grant a User "admin" or "client" permissions on a resource
-
-    ```
-    harness grant [ client | admin ] <user-id> <resource-id>
-    ```
-    The user-id must be unique to the resource owner. Think if it as an account id. The resource-id is the engine-id that is the root of all sub-resources like Events and Queries. The resource-id must be a wildcard "*" for the admin user and this command will only work if the CLI is already set up as an admin.
-    
- - Revoke permissions.    
-
-    ```
-    harness revoke [ client | admin ] <user-id> <resource-id>
-    ```
-    The user-id must exist and be granted permission for the resource-id. Once permission is revoked Harness will refuse requests from the user-id with the appropriate response code in the [Harness REST-Spec](rest_spec.md)
+In the above workflow when using the Auth-Server we would have to create a user and grant them client access to the Engine once it is created. The Bearer Token would be used to construct the Java or Python SDK client for the resource-type, such as the EventsClient and the QueriesClient. In this sense the Bearer Token acts as credentials.   
     
 # Configuration Parameters
 
