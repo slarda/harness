@@ -19,7 +19,7 @@ if [ -z "$ENGINE_ID" ]; then
     exit 1
 fi
 
-if [ ${ENGINE_ID} = "-a" ]; then
+if [ ${ENGINE_ID} = "engines" ]; then
     echo -e "${CYAN}Getting status for all Engines:${NC}"
     PYTHON_ARGS="status --all-engines"
 

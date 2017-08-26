@@ -23,7 +23,7 @@ echo ""
 #echo -e "       Stops the engine, modifies the parameters and restarts the engine. WARNING: not implemented, instead perform harness delete then add"
 #echo ""
 
-echo -e "   ${CYAN}harness delete [-c <some-engine.json> | <engine-id>]${NC}"
+echo -e "   ${CYAN}harness delete <engine-id>${NC}"
 echo -e "       Deletes engine and all data"
 echo ""
 
@@ -31,7 +31,7 @@ echo ""
 #echo -e "       In the Lambda model this trains the algorithm on all previously accumulated data. WARNING: not implemented."
 #echo ""
 
-echo -e "   ${CYAN}harness status [[ engines | engines <engine-id>]]${NC}"
-echo -e "       Prints a status message for the harness server, all engines or for the engine specified."
+echo -e "   ${CYAN}harness status [[ -a | <engine-id>]]${NC}"
+echo -e "       Prints a status message for the harness server, all engines or the engine specified."
 echo ""
 

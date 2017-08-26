@@ -35,8 +35,8 @@ Set your path to include to the directory containing the `harness` script. Comma
  - **`harness import <some-resource-id> [<some-directory> | <some-file>]`** This is typically used to replay previously mirrored events or bootstrap events created from application logs. It is safest to import into an empty new engine since some events cause DB changes and others have no side effects. **Note**: `-i` may be required before the file or directory name. run `harness help` for current implementation.
  - **&dagger;**`harness train [-c <some-engine-json-file> | <some-resource-id>]` in the Lambda model this trains the algorithm on all previously accumulated data.
  - **`harness status`** prints a status message for harness.
- - **`harness status -a`** lists all engines and stats about them
- - **`harness status <engine-id>`** status of and Engine
+ - **`harness status -a`** lists all engines and stats about them.  **Note**: this will be changed to `harness status engines`
+ - **`harness status <engine-id>`** status of and Engine.
  - **&dagger;**`harness status commands` lists any currently active long running commands like `harness train ...`
 
 # User and Permission Management
@@ -47,6 +47,7 @@ When using Authentication with Harness we define Users and give them Permissions
  - **`harness user-delete <user-id>`** removes the user and any permissions they have, in effect revoking their bearer token.
  - **`harness grant <user-id> [client | admin] [<engine-id> \| *]`** grants client or admin access to an engine for a user-id
  - **`harness revoke <user-id> [<engine-id> \| *]`** revokes all permissions for the engine-id
+ - **`harness status users`** list all users and their permissions
 
 # Harness Workflow (no auth)
 
