@@ -26,6 +26,6 @@ PYTHON_ARGS="create"
 if [ -n "$ENGINE_CONFIG" ]; then PYTHON_ARGS="${PYTHON_ARGS} -c ${ENGINE_CONFIG}"; fi
 
 
-echo -e "${CYAN}Run ${HARNESS_HOME}/bin/engine.py ${PYTHON_ARGS}${NC}"
+echo -e "${CYAN}Run ${HARNESS_HOME}/bin/engines.py ${PYTHON_ARGS}${NC}"
 
-${HARNESS_HOME}/bin/engine.py ${PYTHON_ARGS}
+${HARNESS_HOME}/bin/engines.py ${PYTHON_ARGS}

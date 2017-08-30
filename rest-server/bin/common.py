@@ -7,10 +7,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument("action", type=str)
 parser.add_argument("engine_id", type=str, nargs="?", default=None)
 parser.add_argument("-c", "--config", type=str, default=None)
+parser.add_argument("-u", "--userid", type=str, default=None)
+parser.add_argument("-r", "--roleset", type=str, default=None)
+parser.add_argument("-e", "--engineid", type=str, default=None)
 parser.add_argument("--data-delete", "-d", dest='delete', default=False, action='store_true')
 parser.add_argument("--force", "-f", default=False, action='store_true')
 parser.add_argument("--input", "-i", type=str, default=None)
 parser.add_argument("--all-engines", "-a", default=False, action='store_true')
+parser.add_argument("--all-users", default=False, action='store_true')
 args = parser.parse_args()
 
 
@@ -51,12 +55,17 @@ def id_or_config():
 
     return engine_id, config
 
+def user_id():
+    print(args)
+    user_id=args.userid
+    return user_id
+
 
 harness_host = os.getenv('REST_SERVER_HOST', 'localhost')
 harness_port = os.getenv('REST_SERVER_PORT', 9090)
 
 url = 'http://{}:{}'.format(harness_host, harness_port)
 
-if args.engine_id is None and args.config is None and args.action != 'status':
-    print_warning('Expect engine_id or config')
+if args.engine_id is None and args.config is None and args.action != 'status' and args.action != 'user-add' and args.action != 'user-delete' and args.action != 'grant' and args.action != 'revoke' :
+    print_warning('Malformed command')
     exit(1)

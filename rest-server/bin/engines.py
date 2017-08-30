@@ -32,7 +32,7 @@ elif args.action == 'delete':
         print_failure(err, 'Error deleting engine-id: {}\n'.format(engine_id))
 
 elif args.action == 'status':
-    engine_id = args.engine_id
+    engine_id = args.engineid
     try:
         if engine_id is not None:
             res = engine_client.get(engine_id=engine_id)
