@@ -35,10 +35,10 @@ import pytz
 from actionml.connection import Connection
 from actionml.connection import AsyncRequest
 from actionml.connection import AsyncResponse
-from actionml.connection import ActionMLAPIError
+from actionml.connection import HarnessAPIError
 
 
-class HttpError(ActionMLAPIError):
+class HttpError(HarnessAPIError):
     def __init__(self, message, response):
         super(HttpError, self).__init__(message)
         self.response = response
@@ -399,10 +399,10 @@ class QueryClient(BaseClient):
         return self.async_send_query(data).get_response()
 
 
-class CommandClient(BaseClient):
+class CommandsClient(BaseClient):
     def __init__(self, url = "http://localhost:9090", threads=1, qsize=0, timeout=5, user_id=None, user_secret=None):
         self.path = "/commands"
-        super(CommandClient, self).__init__(url, threads, qsize, timeout, user_id, user_secret)
+        super(CommandsClient, self).__init__(url, threads, qsize, timeout, user_id, user_secret)
 
     def async_get_engines_list(self):
         request = AsyncRequest("GET", self.path + "/list/engines")

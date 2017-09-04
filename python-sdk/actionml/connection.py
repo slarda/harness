@@ -55,15 +55,15 @@ def enable_log(filename=None):
     DEBUG_LOG = True
 
 
-class ActionMLAPIError(Exception):
+class HarnessAPIError(Exception):
     pass
 
 
-class NotSupportMethodError(ActionMLAPIError):
+class NotSupportMethodError(HarnessAPIError):
     pass
 
 
-class ProgramError(ActionMLAPIError):
+class ProgramError(HarnessAPIError):
     pass
 
 
@@ -204,7 +204,7 @@ class AsyncResponse(object):
         self.request = request
 
 
-class ActionMLHttpConnection(object):
+class HarnessHttpConnection(object):
     def __init__(self, host, https=True, timeout=5):
         self.access_token = None
         if https:  # https connection
@@ -337,7 +337,7 @@ def connection_worker(host, request_queue, https=True, timeout=5, loop=True):
         :param host:  
     """
 
-    connect = ActionMLHttpConnection(host, https, timeout)
+    connect = HarnessHttpConnection(host, https, timeout)
 
     # loop waiting for job form request queue
     killed = not loop
