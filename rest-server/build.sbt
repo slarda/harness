@@ -55,6 +55,7 @@ lazy val common = (project in file("common")).
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
+      "io.circe" %% "circe-generic-extras" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
       "de.heikoseeberger" %% "akka-http-circe" % "1.16.0"
     )
@@ -106,15 +107,11 @@ lazy val server = (project in file("server")).dependsOn(core, common, templates,
 
     "org.scaldi" %% "scaldi-akka" % "0.5.8"
   )
-).enablePlugins(JavaAppPackaging).aggregate(core, templates, admin)
+).enablePlugins(JavaAppPackaging).aggregate(core, common, templates, admin)
 
 lazy val authServer = (project in file("auth-server")).dependsOn(common).settings(
   commonSettings,
   libraryDependencies ++= Seq(
-    "ch.qos.logback" % "logback-classic" % "1.1.8",
-    "org.slf4j" % "log4j-over-slf4j" % "1.7.22",
-    "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
-
     "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
     "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
 
@@ -124,9 +121,6 @@ lazy val authServer = (project in file("auth-server")).dependsOn(common).setting
     "org.mongodb" % "mongodb-driver-core" % "3.4.2",
     "org.mongodb" % "mongodb-driver-async" % "3.4.2",
 
-    "com.typesafe" % "config" % "1.3.1",
-    "com.iheart" %% "ficus" % "1.4.0",
-
     "org.scaldi" %% "scaldi-akka" % "0.5.8"
   )
-)
+).enablePlugins(JavaAppPackaging).aggregate(common)
