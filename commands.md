@@ -42,15 +42,15 @@ Set your path to include to the directory containing the `harness` script. Comma
 
 When using Authentication with Harness we define Users and give them Permissions. Two Permissions are predefined: client and admin. Clients are typically granted access to any number of Engines by ID and all of their sub-resources: Events and Queries. The admin has access to all parts of Harness. In order to manage Users and Permissions the User must be an admin so these commands will only work for an admin.
 
- - **`harness user-add`** returns the bearer token credentials for the user and a unique user-id.
- - **`harness user-delete <some-user-id>`** removes the user and any permissions they have, in effect revoking their bearer token.
- - **`harness grant <some-user-id> [client | admin] [<some-engine-id> \| *]`** grants client or admin access to an engine for a user-id
- - **`harness revoke <some-user-id> [<some-engine-id> \| *]`** revokes all permissions for the engine-id
- - **`harness status users [<some-user-id>[`** list all users and their permissions or only permissions for requested user.
+ - **`harness user-add [client | admin] [<some-engine-id>]`** returns the user-id and secret that gives `roleSet` access to the engine-id specified. Not that the engine-id is not needed for creating an admin user which, as a superuser, has access to all resources.
+ - **`harness user-delete <some-user-id>`** removes the user and any permissions they have, in effect revoking their credentials. A warning will be generated when deleting an admin user.
+ - **`harness grant <some-user-id> <some-engine-id>`** grants client or access to an engine-id for a user-id. **Note**: This is only needed if more than one engine-id is used by a "client" since creating a "client" requires an initializing engine-id. Also this is never needed for an admin user since they are created with superuser access to all resources.
+ - **`harness revoke <some-user-id> [<some-engine-id> | *]`** revokes all permissions for a user-id to the engine-id(s) specified. The wild-card revokes access to all engine-ids. And error is reported if this is used to revoke admin permissions since all admins are superusers.
+ - **`harness status users [<some-user-id>]`** list all users and their permissions or only permissions for requested user.
 
 # Harness Workflow
 
-Startup all services needed by all templates. For Harness with the Contextual Bandit this will be MongoDB and VowpalWabbit (see the Template docs for installing services). Other Templates may require other services. Each type of engine will allow config for connecting to the services it needs in its JSON config file. But the services must be running before Harness and the Engine is started or it will not be able to connect to them.
+Startup all services needed by all templates. For Harness with the Contextual Bandit this will be MongoDB and Vowpal Wabbit (see the Template docs for installing services). Other Templates may require other services. Each type of engine will allow config for connecting to the services it needs in its JSON config file. But the services must be running before Harness and the Engine is started or it will not be able to connect to them.
 
 ## Workflow Without Auth
 
@@ -80,14 +80,37 @@ Startup all services needed by all templates. For Harness with the Contextual Ba
 
         harness stop
         # stop may take some small amount of time
+        
+## Creating an Admin and Enabling Auth
 
+Creating admin right after installation can be done with the following steps:
+
+1. Make sure the python-sdk, the auth-server’s, and the Harness server’s auth is disabled (it is disabled by default after installation)
+
+1. **`harness start`**
+1. **`auth-server start`** Normally the auth-server is only started when harness is using auth this is the only case it is needed without auth enabled.
+1. `harness user-add admin` # this returns user-id and a secret
+1. `harness stop` and `auth-server stop`
+1. Enable auth for the python-sdk, harness, and the auth-server by editing `harness/bin/harness-env` in the distrubution built using `make-distribution.sh` and `auth-server/bin/auth-server-env` in the location of your Auth Server build. The auth enabling variable is documented in both files.
+ - **The user-id** for the admin can be in the ENV in clear text. 
+ - **The "secret"** used as the OAuth2 Bearer Token should have an ENV variable that points to a file with read/write permission only for the linux user running harness, much like the permissions used for ssh private keys. The secret should be in a file in ~/.ssh/harness-user-key with RW permission only for the user of the SDK or the user who has lunched Harness. This mechanism is used on the client-side with the Java or Python SDK as well as the CLI (which uses the Python SDK).
+1. Once the ENV is setup, the user-id and secret are stored securely the CLI will use these to access Harness when auth is enabled.
+2. Set ENV in both servers `-env` files to require TLS.
+1. `harness start` and `auth-server start` these will now require a user-id and credentials for any access since all resources are protected. These have been setup in the ENV in step #6.
+
+**&dagger;**The above process will be wrapped in a `setup-auth.sh` script that will run all the steps and report user-id and credentials while also configuring the ENV and doing all the start/stop of servers to make it functional. This is not yet available. **Note**: setting up a remote admin on another machine who connects to Harness across the internet securely is quite possible but the above steps should be executed on the 2 different machines and will not be scripted.
+ 
 ## Workflow With Auth   
 
-**Warming**: It is unsafe to use Auth without TLS/SSL enabled since the user credentials (Bearer Token) can be seen in clear text by any man-in-the-middle attack. See [Security](security.md) for a description of how to enable server side TLS and OAuth2.
+The primary difference between using the CLI with auth and without is that users are not required without auth and the Auth Server is not launched. Any access to the resources of Harness is allowed without auth. So enabling auth requires at least 2 users, one "admin" and one "client". The remote user of the SDK will usually be a "client" accessing one or more engine-ids via the Events and Queries resource types. The "admin" user runs the CLI.
 
-In the above workflow when using the Auth-Server we will need to create a user and grant them "client" access to the Engine once it is created. The Bearer Token would be used to construct the Java or Python SDK client such as the `EventsClient` and the `QueriesClient`. In this sense the Bearer Token acts as credentials.   
+**Warning**: It is unsafe to use Auth without TLS/SSL enabled since the user secret credentials (Bearer Token) can be seen in clear text by any man-in-the-middle attack. See [Security](security.md) for a description of how to enable server side TLS and OAuth2.
 
- 1. Start the Harness server after the component services like Spark, DBs, etc:
+In the above workflow when using the Auth-Server we will need to create a user and grant them "client" access to the Engine once it is created. The Bearer Token would be used to construct the Java or Python SDK client such as the `EventsClient` and the `QueriesClient`. In this sense the secret/ OAuth2 Bearer Token acts as credentials.   
+
+ 1. Create the Admin user and enable auth with TLS as described in the section above.
+ 
+ 1. Start the Harness server **after** the component services like MongoDB and others required by the templates used:
         
         harness start 
          
@@ -99,12 +122,10 @@ In the above workflow when using the Auth-Server we will need to create a user a
  
  1. With Auth in place we must create a user with credentials then grant them client access to the engine-id:
 
-        harness user-add
-        # a Bearer Token and user-id will be returned
-        harness grant <some-user-id> client <some-engine-id>
-        # the <some-engine-id> is defined in </path/to/some-engine.json> file   
+        harness user-add client <some-engine-id>
+        # a user-id and secret will be returned   
         
- At this point the admin is expected to send the Bearer Token to the end user so they can use it with the SDK, which handles the Auth handshake.
+ At this point the admin is expected to send the user-id and secret to the end user so they can use it with the SDK.
  
  1. The end user sends events to the engine-id using the SDK and the engine does what it does. Some engines (Kappa style) will update the model in real time, others (Lambda style) will save up data until they are told to "train" when the model will be completely updated.
         
@@ -134,12 +155,12 @@ All config of Harness is done with `harness-env`. Any needed services are to be 
 
 ## `harness-env`
 
-`harness-env` is a Bash shell script that is sourced before any command is run. All required variable should be defined like this:
+`harness-env` is a Bash shell script that is sourced before any command is run. All required variables can be overridden here if needed:
 
     export MONGO_HOST=<some-host-name>
     export MONGO_PORT=<some-port-number>
     
-A full list of these will be provided in a bash shell script that sets up any overrides before launching Harness.
+A full list of these will be provided in a `harness-env` and `auth-server-env`.
 
 ## `some-engine.json` Required Parameters
 
