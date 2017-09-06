@@ -4,7 +4,12 @@ from actionml import EngineClient, HttpError
 
 from common import *
 
-engine_client = EngineClient(url=url)
+engine_client = EngineClient(
+    url=url,
+    user_id=client_user_id,
+    user_secret=client_user_secret
+)
+
 
 if args.action == 'create':
     with open(args.config) as data_file:

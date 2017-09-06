@@ -125,8 +125,8 @@ def execute_queries(client, file):
 
 if __name__ == '__main__':
 
-    user_id = '8c24137d-24ed-498d-a5d6-f21051db9ce5'
-    user_secret = 'sILCF14ljZZdnqbzzg9SDJemz6wDY3YMH1rdbZ4r7RLzsA2vIh5R9H68WSMJN6ry'
+    user_id = '57df7d8b-309e-48e5-b2b6-41e1c9ac6b04'
+    user_secret = '72iMmNw0ohio0sEZ2nTzcnaWkfgMi5LZFvft5pRxj4KiNEga2R2mNOLV6ivDTRSe'
 
     parser = argparse.ArgumentParser(
         description="Import sample data for recommendation engine")

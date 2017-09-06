@@ -39,4 +39,4 @@ if [ -n "$INPUT_LOCATION" ]; then PYTHON_ARGS="${PYTHON_ARGS} -i ${INPUT_LOCATIO
 
 echo -e "${CYAN}Run ${HARNESS_HOME}/bin/engines.py ${PYTHON_ARGS}${NC}"
 
-${HARNESS_HOME}/bin/engines.py ${PYTHON_ARGS}
+${HARNESS_HOME}/bin/eengines.py ${PYTHON_ARGS}

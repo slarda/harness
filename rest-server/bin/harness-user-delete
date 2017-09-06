@@ -20,7 +20,7 @@ if [ -z "$USER_ID" ]; then
     exit 1
 fi
 
-PYTHON_ARGS="user-delete -u $USER_ID"
+PYTHON_ARGS="user-delete -u $USER_ID $USER_ARGS"
 
 echo -e "${CYAN}Run ${HARNESS_HOME}/bin/users.py ${PYTHON_ARGS}${NC}"
 

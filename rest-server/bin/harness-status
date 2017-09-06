@@ -23,7 +23,7 @@ fi
 if [ ${RESOURCE_TYPE} = "engines" ]; then
 
     if [ -z ${RESOURCE_ID} ]; then
-        PYTHON_ARGS="status --all-engines"
+        PYTHON_ARGS="status --all_engines $USER_ARGS"
 
         echo -e "${CYAN}Run ${HARNESS_HOME}/bin/engines.py ${PYTHON_ARGS}${NC}"
 
@@ -32,7 +32,7 @@ if [ ${RESOURCE_TYPE} = "engines" ]; then
     fi
 
     if [ ! -z ${RESOURCE_ID} ]; then
-        PYTHON_ARGS="status -e ${RESOURCE_ID}"
+        PYTHON_ARGS="status -e ${RESOURCE_ID} $USER_ARGS"
 
         echo -e "${CYAN}Run ${HARNESS_HOME}/bin/engines.py ${PYTHON_ARGS}${NC}"
 
@@ -44,7 +44,7 @@ fi
 
 if [ ${RESOURCE_TYPE} = "users" ]; then
     if [ -z ${RESOURCE_ID} ]; then
-        PYTHON_ARGS="status --all-users"
+        PYTHON_ARGS="status --all_users $USER_ARGS"
 
         echo -e "${CYAN}Run ${HARNESS_HOME}/bin/engines.py ${PYTHON_ARGS}${NC}"
 
@@ -53,7 +53,7 @@ if [ ${RESOURCE_TYPE} = "users" ]; then
     fi
 
     if [ ! -z ${RESOURCE_ID} ]; then
-        PYTHON_ARGS="status --userid ${RESOURCE_ID}"
+        PYTHON_ARGS="status --user_id ${RESOURCE_ID} $USER_ARGS"
 
         echo -e "${CYAN}Run ${HARNESS_HOME}/bin/users.py ${PYTHON_ARGS}${NC}"
 

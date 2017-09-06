@@ -1,16 +1,28 @@
 #!/usr/bin/env python
 
-from actionml import HttpError
+from actionml import HttpError, UsersClient
 
 from common import *
 
-# users_client = UsersClient(url=url)
+# print('user: {} secret: {}'.format(client_user_id, client_user_secret))
+users_client = UsersClient(
+    url=url,
+    user_id=client_user_id,
+    user_secret=client_user_secret
+)
 
 if args.action == 'user-add':
+    role_set = args.role_set
+    engine_id = args.engineid
     try:
-        # res = users_client.create()
-        # print_success(res, 'Created new user and bearer token. Success:\n')
-        print("Adding a user, returning a user-id and token")
+        if role_set == 'client':
+            res = users_client.create_user(role_set_id=role_set, resource_id=engine_id)
+            print_success(res, 'Added user: '.format())
+        elif role_set == 'admin':
+            res = users_client.create_user(role_set_id=role_set, resource_id='*')
+            print_success(res, 'Added user: '.format())
+        else:
+            print("Whoopsie, bad role")
     except HttpError as err:
         print_failure(err, 'Error creating new user\n')
 
