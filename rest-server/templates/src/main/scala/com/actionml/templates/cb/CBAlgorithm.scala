@@ -24,6 +24,7 @@ import akka.actor._
 import akka.event.Logging
 import cats.data.Validated
 import cats.data.Validated.{Invalid, Valid}
+import com.actionml.core.model.User
 import com.actionml.core.storage._
 import com.actionml.core.template._
 import com.actionml.core.validate.{JsonParser, ValidRequestExecutionError, ValidateError}
@@ -31,6 +32,7 @@ import com.actionml.templates.cb.SingleGroupTrainer.constructVWString
 import com.mongodb.casbah.Imports._
 import salat.global._
 import com.typesafe.scalalogging.LazyLogging
+import salat.dao.SalatDAO
 
 import scala.concurrent.Await
 import scala.io.Source
@@ -352,7 +354,7 @@ case class CBAlgoParams(
 
 class SingleGroupTrainer(
     events: UsageEventDAO,
-    users: UsersDAO,
+    users: SalatDAO[User, String],
     params: CBAlgoParams,
     group: GroupParams,
     resourceId: String,
@@ -447,7 +449,7 @@ object SingleGroupTrainer {
 
   def props(
     events: UsageEventDAO,
-    users: UsersDAO,
+    users: SalatDAO[User, String],
     params: CBAlgoParams,
     group: GroupParams,
     resourceId: String,

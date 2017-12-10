@@ -21,6 +21,7 @@ import cats.data
 import cats.data.Validated
 import cats.data.Validated.{Invalid, Valid}
 import com.actionml.core.drawInfo
+import com.actionml.core.model.{GenericEngineParams, Query, Status}
 import com.actionml.core.template._
 import com.actionml.core.validate.{JsonParser, ValidateError, WrongParams}
 
