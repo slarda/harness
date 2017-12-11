@@ -492,7 +492,6 @@ object SingleGroupTrainer {
       rawTextToVWFormattedString(
         "user_" + userId + " " + "testGroupId_" + testGroupId + " " +
           user.propsToMapOfSeq.map { case(propId, propSeq) =>
-            // propString is a flatmapped Seq of Strings separated by %, to make into a user feature, split, sort, and flatmap
             propSeq.map { propVal  =>
               propId + "_" + propVal.replaceAll("\\s+", "_") + "_" + testGroupId
             }.mkString(" ")

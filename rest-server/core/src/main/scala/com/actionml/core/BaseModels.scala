@@ -17,6 +17,7 @@ package com.actionml.core.model
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import scala.collection.JavaConverters._
 
 case class User(
     _id: String,

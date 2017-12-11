@@ -101,7 +101,27 @@ class CBDataset(resourceId: String) extends Dataset[CBEvent](resourceId) with Js
               "eventTime" -> new DateTime(event.eventTime)) //sort by this
 */
             usageEventGroups(event.properties.testGroupId).insert(event.toUsageEvent)
-            usersDAO.
+
+            import scala.collection.JavaConversions._
+            import scala.collection.JavaConverters._
+
+            val user = usersDAO.findOneById(event.entityId).getOrElse(User("", Map.empty))
+            val existingProps = user.propsToMapOfSeq
+            val updatedUser = if (existingProps.keySet.contains("contextualTags")) {
+              val newTags = (existingProps("contextualTags") ++ event.properties.contextualTags).takeRight(100)
+              val newTagString = newTags.mkString("%")
+              val newProps = user.properties + ("contextualTags" -> newTagString )
+              User(user._id, newProps)
+            } else {
+              val newTags = event.properties.contextualTags.takeRight(100).mkString("%")
+              User(user._id, user.properties + ("contextualTags" -> newTags))
+            }
+            usersDAO.update(DBObject("_id" -> user._id),
+              updatedUser,
+              upsert = true,
+              multi = false,
+              wc = new WriteConcern)
+
             Valid(event)
           } else {
             logger.warn(s"Data sent for non-existent group: ${event.properties.testGroupId} will be ignored")
@@ -129,15 +149,18 @@ class CBDataset(resourceId: String) extends Dataset[CBEvent](resourceId) with Js
           usageEventGroups = usageEventGroups +
             (event._id -> UsageEventDAO(connection(resourceId)(event._id)))
 
-          GroupsDAO.insert(event)
+          GroupsDAO.update(DBObject("_id" -> event._id),
+            event,
+            upsert = true,
+            multi = false,
+            wc = new WriteConcern)
           Valid(event)
 
         case event: CBUserUnsetEvent => // unset a property in a user profile
           logger.trace(s"Dataset: ${resourceId} persisting a User Profile Unset Event: ${event}")
-          val update = new MongoDBObject
           val unsetPropNames = event.properties.get.keys.toArray
 
-          usersDAO.collection.update(MongoDBObject("userId" -> event.entityId), $unset(unsetPropNames: _*), true)
+          usersDAO.collection.update(MongoDBObject("_id" -> event.entityId), $unset(unsetPropNames: _*), true)
           Valid(event)
 
         case event: CBDeleteEvent => // remove an object, Todo: for a group, will trigger model removal in the Engine
