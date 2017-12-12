@@ -105,24 +105,28 @@ class CBDataset(resourceId: String) extends Dataset[CBEvent](resourceId) with Js
             import scala.collection.JavaConversions._
             import scala.collection.JavaConverters._
 
-            val user = usersDAO.findOneById(event.entityId).getOrElse(User("", Map.empty))
-            val existingProps = user.propsToMapOfSeq
-            val updatedUser = if (existingProps.keySet.contains("contextualTags")) {
-              val newTags = (existingProps("contextualTags") ++ event.properties.contextualTags).takeRight(100)
-              val newTagString = newTags.mkString("%")
-              val newProps = user.properties + ("contextualTags" -> newTagString )
-              User(user._id, newProps)
-            } else {
-              val newTags = event.properties.contextualTags.takeRight(100).mkString("%")
-              User(user._id, user.properties + ("contextualTags" -> newTags))
-            }
-            usersDAO.update(DBObject("_id" -> user._id),
-              updatedUser,
-              upsert = true,
-              multi = false,
-              wc = new WriteConcern)
+            if (event.properties.converted) { // store the preference with the user
+              val user = usersDAO.findOneById(event.entityId).getOrElse(User("", Map.empty))
+              val existingProps = user.propsToMapOfSeq
+              val updatedUser = if (existingProps.keySet.contains("contextualTags")) {
+                val newTags = (existingProps("contextualTags") ++ event.properties.contextualTags).takeRight(100)
+                val newTagString = newTags.mkString("%")
+                val newProps = user.properties + ("contextualTags" -> newTagString)
+                User(user._id, newProps)
+              } else {
+                val newTags = event.properties.contextualTags.takeRight(100).mkString("%")
+                User(user._id, user.properties + ("contextualTags" -> newTags))
+              }
+              usersDAO.update(
+                DBObject("_id" -> user._id),
+                updatedUser,
+                upsert = true,
+                multi = false,
+                wc = new WriteConcern)
 
+            }
             Valid(event)
+
           } else {
             logger.warn(s"Data sent for non-existent group: ${event.properties.testGroupId} will be ignored")
             Invalid(EventOutOfSequence(s"Data sent for non-existent group: ${event.properties.testGroupId}" +
@@ -130,13 +134,22 @@ class CBDataset(resourceId: String) extends Dataset[CBEvent](resourceId) with Js
           }
 
 
-        case event: CBUserUpdateEvent => // user profile update, modifies user object
+        case event: CBUserUpdateEvent => // user profile update, modifies user object from $set event
           logger.debug(s"Dataset: $resourceId persisting a User Profile Update Event: $event")
           // input to usageEvents collection
           // Todo: validate fields first
-          val props = event.properties.getOrElse(Map.empty)
-          val userProps = User.propsToMapString(props)
-          usersDAO.insert(User(event.entityId, userProps))
+          val updateProps = event.properties.getOrElse(Map.empty)
+          val user = usersDAO.findOneById(event.entityId).getOrElse(User(event.entityId, Map.empty))
+          val newProps = user.propsToMapOfSeq ++ updateProps
+          val newUser = User(user._id, User.propsToMapString(newProps))
+          val debug = 0
+          usersDAO.update(
+            DBObject("_id" -> event.entityId),
+            newUser,
+            upsert = true,
+            multi = false,
+            wc = new WriteConcern)
+
           Valid(event)
 
         case event: GroupParams => // group init event, modifies group definition
@@ -158,11 +171,21 @@ class CBDataset(resourceId: String) extends Dataset[CBEvent](resourceId) with Js
 
         case event: CBUserUnsetEvent => // unset a property in a user profile
           logger.trace(s"Dataset: ${resourceId} persisting a User Profile Unset Event: ${event}")
-          val unsetPropNames = event.properties.get.keys.toArray
+          // input to usageEvents collection
+          // Todo: validate fields first
+          val updateProps = event.properties.getOrElse(Map.empty).keySet
+          val user = usersDAO.findOneById(event.entityId).getOrElse(User(event.entityId, Map.empty))
+          val newProps = user.propsToMapOfSeq -- updateProps
+          val newUser = User(user._id, User.propsToMapString(newProps))
+          val debug = 0
+          usersDAO.save(newUser) // overwrite the User
+
+          Valid(event)
+/*          val unsetPropNames = event.properties.get.keys.toArray
 
           usersDAO.collection.update(MongoDBObject("_id" -> event.entityId), $unset(unsetPropNames: _*), true)
           Valid(event)
-
+*/
         case event: CBDeleteEvent => // remove an object, Todo: for a group, will trigger model removal in the Engine
           event.entityType match {
             case "user" =>
@@ -215,9 +238,9 @@ class CBDataset(resourceId: String) extends Dataset[CBEvent](resourceId) with Js
         case "$unset" => // remove properties
           event.entityType match {
             case "user" => // got a user profile update event
-              logger.trace(s"Dataset: ${resourceId} parsing a user unset event: ${event.event}")
+              logger.trace(s"Dataset: ${resourceId} parsing a user $$unset event: ${event.event}")
               parseAndValidate[CBUserUnsetEvent](json).andThen { uue =>
-                if (uue.properties.isDefined) {
+                if (!uue.properties.isDefined) {
                   Invalid(MissingParams("No parameters specified, event ignored"))
                 } else {
                   Valid(uue)
@@ -274,9 +297,7 @@ case class CBUserUpdateEvent(
 
 case class CBUserUnsetEvent(
   entityId: String,
-  // Todo:!!! this is teh way they should be encoded, fix when we get good JSON
-  // properties: Option[Map[String, Seq[String]]],
-  properties: Option[Map[String, Any]] = None,
+  properties: Option[Map[String, Int]] = None,
   eventTime: String)
   extends CBEvent
 
