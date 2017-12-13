@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import akka.japi.Pair;
 import com.actionml.EventsClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,8 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -34,7 +37,9 @@ import java.util.stream.Collectors;
  * @author The ActionML Team (<a href="http://actionml.com">http://actionml.com</a>)
  *         04.02.17 18:46
  */
-public class EventsClientExample { private static Logger log = LoggerFactory.getLogger(EventsClientExample.class);
+public class EventsClientExample {
+
+    private static Logger log = LoggerFactory.getLogger(EventsClientExample.class);
 
     public static void main(String[] args) {
 
@@ -92,7 +97,8 @@ public class EventsClientExample { private static Logger log = LoggerFactory.get
         });
         */
 
-        // This examples takes JSON input
+        // This examples takes a file of JSON, one object per line and sends them all asynchronously to the server
+        /*
         try (BufferedReader br = Files.newBufferedReader(Paths.get(fileName))) {
 
             List<String> events = br.lines().collect(Collectors.toList());
@@ -118,6 +124,42 @@ public class EventsClientExample { private static Logger log = LoggerFactory.get
 
         } catch (IOException e) {
             log.error("Oops, we have an error: ", e);
+            client.close();
+        }
+        */
+
+        // This example reads one event and sends it synchronously to the server, waiting for a response after each send
+        try (BufferedReader br = Files.newBufferedReader(Paths.get(fileName))) {
+
+            List<String> events = br.lines().collect(Collectors.toList());
+
+            log.info("Number of events to send: " + events.size());
+
+            //CompletableFuture.allOf(events.forEach(..sendevent...whenComplete..)).andThen(client.close)
+            long start = System.currentTimeMillis();
+            CompletableFuture<Pair<Integer, String>> futures[] = new CompletableFuture[100];
+            Object[] a = new Object[100];
+            Integer i = 0;
+
+            for(String event: events) {
+                CompletableFuture<Pair<Integer, String>>
+                        future = (CompletableFuture<Pair<Integer, String>>) client.sendEvent(event)
+                        .whenComplete ((responceCode, someString) -> {
+                            log.info("Event: " + event + "sent with responce code: " + responceCode);
+                        });
+                futures[i++] = future;
+
+            }
+
+            CompletableFuture.allOf((futures);
+
+            log.info("Close client");
+            //client.close();
+            long duration = System.currentTimeMillis() - start;
+            log.info("Finished queuing send of " + events.size() + " events in : " + duration + " milliseconds");
+
+        } catch (IOException e) {
+            log.error("Oops, we have an unrecoverable error: ", e);
             client.close();
         }
 
