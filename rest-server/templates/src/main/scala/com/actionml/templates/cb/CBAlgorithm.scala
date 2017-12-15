@@ -76,7 +76,7 @@ class CBAlgorithm(dataset: CBDataset)
 
   val serverHome = sys.env("HARNESS_HOME")
 
-  private val actors = ActorSystem("CBAlgorithm") // todo: should this be derived from the classname?
+  private val actors = ActorSystem(dataset.resourceId) // todo: should this be a constructor param?
   var trainers = Map.empty[String, ActorRef]
   var params: CBAlgoParams = _
   var resourceId: String = _
@@ -141,13 +141,17 @@ class CBAlgorithm(dataset: CBDataset)
   }
 
   override def destroy(): Unit = {
-    // remove old model since it is recreated with each new CBEngine
+    // remove old model since it is recreated with each new CBEnginee
+    // Todo: stop the Actors and wait till done!!!
     // the VW model file may take some time to be deletable after closing vw?????
-    if (vw != null.asInstanceOf[VWMulticlassLearner]) vw.close() //Todo: may have to put in future and wait with timeout
+    val closeVW = /* Future */{
+      if (vw != null.asInstanceOf[VWMulticlassLearner]) vw.close()
+      Thread.sleep(1000l) // wait for 1000 millisecond, Todo: not sure how to check for close being done
+    }
     // used by 'time' method
     implicit val baseTime = System.currentTimeMillis
 
-    // put a time limit for VW to close and release the model file
+    // put a time limit for VW to delete the model file
     val deleteModel = Future {
       if (Files.exists(Paths.get(modelPath)) && !Files.isDirectory(Paths.get(modelPath)))
         while (!Files.deleteIfExists(Paths.get(modelPath))) {}

@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -97,7 +98,9 @@ public class EventsClientExample {
         });
         */
 
-        // This examples takes a file of JSON, one object per line and sends them all asynchronously to the server
+        // This examples takes a file of JSON, one object per line and sends them all asynchronously to the server.
+        // Async sends are faster but can only be used if the Engine does not care about the order of Event processing
+        // so use with care, not to be used with the Contextual Bandit for example.
         /*
         try (BufferedReader br = Files.newBufferedReader(Paths.get(fileName))) {
 
@@ -129,32 +132,28 @@ public class EventsClientExample {
         */
 
         // This example reads one event and sends it synchronously to the server, waiting for a response after each send
+        // This is slower than using async sendEvent but is required for Engines that care about the order of processing
+        // so for instance use this method with the Contextual Bandit.
         try (BufferedReader br = Files.newBufferedReader(Paths.get(fileName))) {
 
             List<String> events = br.lines().collect(Collectors.toList());
 
             log.info("Number of events to send: " + events.size());
-
-            //CompletableFuture.allOf(events.forEach(..sendevent...whenComplete..)).andThen(client.close)
             long start = System.currentTimeMillis();
-            CompletableFuture<Pair<Integer, String>> futures[] = new CompletableFuture[100];
-            Object[] a = new Object[100];
-            Integer i = 0;
 
-            for(String event: events) {
-                CompletableFuture<Pair<Integer, String>>
-                        future = (CompletableFuture<Pair<Integer, String>>) client.sendEvent(event)
-                        .whenComplete ((responceCode, someString) -> {
-                            log.info("Event: " + event + "sent with responce code: " + responceCode);
-                        });
-                futures[i++] = future;
-
+            for ( String event: events) {
+                try {
+                    // using the .get() forces the code to wait for the response and so id blocking
+                    // as an alternative use "client.sendEventSync", which may throw the same exceptions listed below
+                    Pair<Integer, String> p = ((CompletableFuture<Pair<Integer, String>>) client.sendEvent(event)).get();
+                    log.info("Sent event: " + event + "\nResponse code: " + p.first().toString());
+                } catch (InterruptedException | ExecutionException e) {
+                    log.error("Error in client.sendEvent waiting for a response ", e);
+                }
             }
 
-            CompletableFuture.allOf((futures);
-
             log.info("Close client");
-            //client.close();
+            client.close();
             long duration = System.currentTimeMillis() - start;
             log.info("Finished queuing send of " + events.size() + " events in : " + duration + " milliseconds");
 
