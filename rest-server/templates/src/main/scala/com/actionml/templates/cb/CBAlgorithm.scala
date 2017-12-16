@@ -141,27 +141,16 @@ class CBAlgorithm(dataset: CBDataset)
   }
 
   override def destroy(): Unit = {
-    // remove old model since it is recreated with each new CBEnginee
-    // Todo: stop the Actors and wait till done!!!
-    // the VW model file may take some time to be deletable after closing vw?????
-    val closeVW = /* Future */{
-      if (vw != null.asInstanceOf[VWMulticlassLearner]) vw.close()
-      Thread.sleep(1000l) // wait for 1000 millisecond, Todo: not sure how to check for close being done
-    }
-    // used by 'time' method
-    implicit val baseTime = System.currentTimeMillis
-
-    // put a time limit for VW to delete the model file
-    val deleteModel = Future {
-      if (Files.exists(Paths.get(modelPath)) && !Files.isDirectory(Paths.get(modelPath)))
-        while (!Files.deleteIfExists(Paths.get(modelPath))) {}
-    }
-    // Todo: should allow configurable?
-    try{ Await.result(deleteModel, 2 seconds) } catch {
+    try{ Await.result(
+      actors.terminate().andThen { case _ =>
+        if (vw != null.asInstanceOf[VWMulticlassLearner]) vw.close()
+      }.map { _ =>
+        if (Files.exists(Paths.get(modelPath)) && !Files.isDirectory(Paths.get(modelPath)))
+          while (!Files.deleteIfExists(Paths.get(modelPath))) {}
+      }, 3 seconds) } catch {
       case e: TimeoutException =>
-        logger.error(s"Error unable to delete the VW model file for $resourceId at $modelPath in the 2 second timeout.")
+        logger.error(s"Error unable to delete the VW model file for $resourceId at $modelPath in the 3 second timeout.")
     }
-
   }
 
   def createVW(params: CBAlgoParams): VWMulticlassLearner = {
@@ -169,7 +158,7 @@ class CBAlgorithm(dataset: CBDataset)
     val reg = s" --l2 ${params.regParam} "
     val iters = s" -c -k --passes ${params.maxIter} "
     val lrate = s" -l ${params.stepSize} "
-    val cacheFile = s" --cache_file ${params.modelName}_cache " // Todo: not used because can't have more than one?????
+    val cacheFile = s" --cache_file ${params.modelName}_cache " // not used, let VW decide how to do caching
     val bitPrecision = s" -b ${params.bitPrecision.toString} "
     val checkpointing = " --save_resume "
     val newModel = s" -f ${params.modelName} "
@@ -195,7 +184,7 @@ class CBAlgorithm(dataset: CBDataset)
     val reg = s" --l2 ${params.regParam} "
     val iters = s" -c -k --passes ${params.maxIter} "
     val lrate = s" -l ${params.stepSize} "
-    val cacheFile = s" --cache_file ${params.modelName}_cache " // Todo: not used because can't have more than one?????
+    val cacheFile = s" --cache_file ${params.modelName}_cache " // not used, let VW manage cahce files
     val bitPrecision = s" -b ${params.bitPrecision.toString} "
     val checkpointing = " --save_resume "
     val newModel = s" -f ${params.modelName} "
