@@ -42,7 +42,7 @@ abstract class Engine extends LazyLogging with JsonParser {
     * @param json the Engine's config JSON for initializing all objects
     * @return The extending Engine instance, initialized and ready for input and/or queries etc.
     */
-  def initAndGet(json: String): Engine
+  //def initAndGet(json: String): Engine
 
   /** This is to destroy a running Engine, such as when executing the CLI `harness delete engine-id` */
   def destroy(): Unit

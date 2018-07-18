@@ -61,7 +61,7 @@ class ScaffoldEngine() extends Engine() with JsonParser {
   // the administrator.
   // Todo: This method for re-init or new init needs to be refactored, seem ugly
   // Todo: should return null for bad init
-  override def initAndGet(json: String): ScaffoldEngine = {
+  private def initAndGet(json: String): ScaffoldEngine = {
     val response = init(json)
     if (response.isValid) {
       logger.trace(s"Initialized with JSON: $json")

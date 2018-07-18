@@ -62,7 +62,7 @@ class NavHintingEngine() extends Engine() with JsonParser {
   // the administrator.
   // Todo: This method for re-init or new init needs to be refactored, seem ugly
   // Todo: should return null for bad init
-  override def initAndGet(json: String): NavHintingEngine = {
+  private def initAndGet(json: String): NavHintingEngine = {
    val response = init(json)
     if (response.isValid) {
       logger.trace(s"Initialized with Engine's JSON: $json")
