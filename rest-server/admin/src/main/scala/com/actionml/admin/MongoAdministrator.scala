@@ -85,7 +85,7 @@ class MongoAdministrator extends Administrator with JsonParser {
       val newEngine = newEngineInstance(params.engineFactory, json)
       if (newEngine != null && enginesCollection.list(DaoQuery(filter = Seq("engineId" -> params.engineId))).size == 1) {
         // re-initialize
-        logger.trace(s"Re-initializing engine for resource-id: ${ params.engineId } with new params $json")
+        logger.trace(s"Initializing engine for resource-id: ${ params.engineId } with new params $json")
         val update = Document("$set" -> Document("engineFactory" -> params.engineFactory, "params" -> json))
         enginesCollection.update("engineId" -> params.engineId)(update)
         engines += params.engineId -> newEngine
@@ -111,10 +111,10 @@ class MongoAdministrator extends Administrator with JsonParser {
   override def updateEngine(json: String): Validated[ValidateError, String] = {
     parseAndValidate[GenericEngineParams](json).andThen { params =>
       engines.get(params.engineId).map { existingEngine =>
-        logger.trace(s"Re-initializing engine for resource-id: ${params.engineId} with new params $json")
+        logger.trace(s"Updating engine config for engineId: ${params.engineId} with new params $json")
         val update = Document("$set" -> Document("engineFactory" -> params.engineFactory, "params" -> json))
         enginesCollection.update("engineId" -> params.engineId)(update)
-        existingEngine.init(json, deepInit = false).andThen(_ => Valid(
+        existingEngine.updateConfig(json).andThen(_ => Valid(
           """{
             |  "comment":"Get engine status to see what was changed."
             |}

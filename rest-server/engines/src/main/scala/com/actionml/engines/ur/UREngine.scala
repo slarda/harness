@@ -25,17 +25,24 @@ import com.actionml.engines.ur.{URAlgorithm, URDataset}
  * limitations under the License.
  */
 
-class UREngine extends Engine() with JsonParser {
+class UREngine(
+    override val engineId: String,
+    val params: GenericEngineParams,
+    val algo: URAlgorithm,
+    val dataset: URDataset)
+  extends Engine() with JsonParser {
   /** This is an empty scaffolding Template for an Engine that does only generic things.
     * This is not the minimal Template because many methods are implemented generically in the
     * base classes but is better used as a starting point for new Engines.
     */
 
-  var dataset: URDataset = _
-  var algo: URAlgorithm = _
-  var params: GenericEngineParams = _
+  //var dataset: URDataset = _
+  //var algo: URAlgorithm = _
+  //var params: GenericEngineParams = _
 
   /** Initializing the Engine sets up all needed objects */
+  /*
+  @deprecated
   override def init(json: String, deepInit: Boolean = true): Validated[ValidateError, Boolean] = {
     super.init(json).andThen { _ =>
       parseAndValidate[GenericEngineParams](json).andThen { p =>
@@ -57,11 +64,19 @@ class UREngine extends Engine() with JsonParser {
       }
     }
   }
+  */
+
+  /** Update whatever config params are allowed for this engine */
+  override def updateConfig(json: String): Validated[ValidateError, Boolean] = {
+    algo.init(json, this)
+  }
 
   // Used starting Harness and adding new engines, persisted means initializing a pre-existing engine. Only called from
   // the administrator.
   // Todo: This method for re-init or new init needs to be refactored, seem ugly
   // Todo: should return null for bad init
+  /*
+  @deprecated
   private def initAndGet(json: String): UREngine = {
     val response = init(json)
     if (response.isValid) {
@@ -72,6 +87,7 @@ class UREngine extends Engine() with JsonParser {
       null.asInstanceOf[UREngine] // todo: ugly, replace
     }
   }
+  */
 
   override def status(): Validated[ValidateError, String] = {
     logger.trace(s"Status of base Engine with engineId:$engineId")
@@ -130,14 +146,26 @@ class UREngine extends Engine() with JsonParser {
 
 }
 
-object UREngine {
+object UREngine extends JsonParser {
   def apply(json: String): UREngine = {
-    val engine = new UREngine()
-    engine.initAndGet(json)
+    parseAndValidate[GenericEngineParams](json).andThen { p =>
+      val params = p
+      val eID = params.engineId
+      val ds = new URDataset(eID)
+      val algorithm = new URAlgorithm(ds)
+      val engine = new UREngine(eID, p, algorithm, ds)
+      drawInfo("Generic UR Engine", Seq(
+        ("════════════════════════════════════════", "══════════════════════════════════════"),
+        ("EngineId: ", eID),
+        ("Mirror Type: ", params.mirrorType),
+        ("Mirror Container: ", params.mirrorContainer)))
+
+      engine
+      Valid(p, engine)
+    }.map(_._2).getOrElse(null.asInstanceOf[UREngine])
+
   }
 
-  // in case we don't want to use "apply", which is magically connected to the class's constructor
-  def createEngine(json: String) = apply(json)
 }
 
 

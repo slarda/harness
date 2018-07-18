@@ -84,6 +84,7 @@ abstract class Engine extends LazyLogging with JsonParser {
 
   /** This is called any time we are initializing a new Engine Object, after the factory has constructed it. The flag
     * deepInit means to initialize a new object, it is set to false when updating a running Engine.*/
+  @deprecated("This is planned for removal by the release of 0.3.0+, use the companion object's apply methid as a factory")
   def init(json: String, deepInit: Boolean = true): Validated[ValidateError, Boolean] = {
 
     parseAndValidate[GenericEngineParams](json).andThen { p =>
@@ -93,6 +94,11 @@ abstract class Engine extends LazyLogging with JsonParser {
       } // not allowed to change with `harness update`
       createResources(p)
     }
+  }
+
+  def updateConfig(json: String): Validated[ValidateError, Boolean] = {
+    logger.info("No config updates allowed for this Engine")
+    Valid(true)
   }
 
   // todo: do we need these? seems like destroy is the only use and it doesn't need an abstract class method
