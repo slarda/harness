@@ -154,13 +154,12 @@ object UREngine extends JsonParser {
       val ds = new URDataset(eID)
       val algorithm = new URAlgorithm(ds)
       val engine = new UREngine(eID, p, algorithm, ds)
-      drawInfo("Generic UR Engine", Seq(
+      drawInfo("Universal Recommender Engine", Seq(
         ("════════════════════════════════════════", "══════════════════════════════════════"),
         ("EngineId: ", eID),
         ("Mirror Type: ", params.mirrorType),
         ("Mirror Container: ", params.mirrorContainer)))
 
-      engine
       Valid(p, engine)
     }.map(_._2).getOrElse(null.asInstanceOf[UREngine])
 

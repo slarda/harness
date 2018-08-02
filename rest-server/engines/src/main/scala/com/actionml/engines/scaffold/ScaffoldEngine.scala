@@ -23,25 +23,32 @@ import com.actionml.core.drawInfo
 import com.actionml.core.model.{GenericEngineParams, GenericEvent, GenericQuery}
 import com.actionml.core.engine._
 import com.actionml.core.validate.{JsonParser, ValidateError, WrongParams}
+import com.actionml.engines.scaffold._
 
 /** This is an empty scaffolding Template for an Engine that does only generic things.
   * This is not the minimal Template because many methods are implemented generically in the
   * base classes but is better used as a starting point for new Engines.
   */
-class ScaffoldEngine() extends Engine() with JsonParser {
+class ScaffoldEngine(
+    engineId: String,
+    params: GenericEngineParams,
+    algorithm: ScaffoldAlgorithm,
+    dataset: ScaffoldDataset)
+  extends Engine() with JsonParser {
 
-  var dataset: ScaffoldDataset = _
-  var algo: ScaffoldAlgorithm = _
-  var params: GenericEngineParams = _
+  //var dataset: ScaffoldDataset = _
+  //var algo: ScaffoldAlgorithm = _
+  //var params: GenericEngineParams = _
 
   /** Initializing the Engine sets up all needed objects */
+  /*
   override def init(json: String, deepInit: Boolean = true): Validated[ValidateError, Boolean] = {
     super.init(json).andThen { _ =>
       parseAndValidate[GenericEngineParams](json).andThen { p =>
-        params = p
-        engineId = params.engineId
-        dataset = new ScaffoldDataset(engineId)
-        algo = new ScaffoldAlgorithm(dataset)
+        //params = p
+        //engineId = params.engineId
+        //dataset = new ScaffoldDataset(engineId)
+        //algorithm = new ScaffoldAlgorithm(dataset)
         drawInfo("Generic Scaffold Engine", Seq(
           ("════════════════════════════════════════", "══════════════════════════════════════"),
           ("EngineId: ", engineId),
@@ -51,12 +58,14 @@ class ScaffoldEngine() extends Engine() with JsonParser {
         Valid(p)
       }.andThen { p =>
         dataset.init(json).andThen { r =>
-          if (deepInit) algo.init(json, this) else Valid(true)
+          if (deepInit) algorithm.init(json, this) else Valid(true)
         }
       }
     }
   }
+  */
 
+  /*
   // Used starting Harness and adding new engines, persisted means initializing a pre-existing engine. Only called from
   // the administrator.
   // Todo: This method for re-init or new init needs to be refactored, seem ugly
@@ -71,6 +80,18 @@ class ScaffoldEngine() extends Engine() with JsonParser {
       null.asInstanceOf[ScaffoldEngine] // todo: ugly, replace
     }
   }
+  */
+
+  /** Update whatever config params are allowed for this engine. Omit if non can be updated. */
+  /*
+  override def updateConfig(json: String): Validated[ValidateError, Boolean] = {
+
+    // update config in algorithm or dataset here
+    // the base Engine will be updated if this is not overridden
+
+  }
+  /*
+
 
   override def status(): Validated[ValidateError, String] = {
     logger.trace(s"Status of base Engine with engineId:$engineId")
@@ -80,7 +101,7 @@ class ScaffoldEngine() extends Engine() with JsonParser {
   override def destroy(): Unit = {
     logger.info(s"Dropping persisted data for id: $engineId")
     dataset.destroy()
-    algo.destroy()
+    algorithm.destroy()
   }
 
   /*
@@ -129,17 +150,30 @@ class ScaffoldEngine() extends Engine() with JsonParser {
     logger.trace(s"Got a query JSON string: $json")
     parseAndValidate[GenericQuery](json).andThen { query =>
       // query ok if training group exists or group params are in the dataset
-      val result = algo.query(query)
+      val result = algorithm.query(query)
       Valid(result.toJson)
     }
   }
 
 }
 
-object ScaffoldEngine {
+object ScaffoldEngine extends JsonParser {
   def apply(json: String): ScaffoldEngine = {
-    val engine = new ScaffoldEngine()
-    engine.initAndGet(json)
+    parseAndValidate[GenericEngineParams](json).andThen { p =>
+
+      val params = p
+      val eID = params.engineId
+      val ds = new ScaffoldDataset(eID)
+      val algorithm = new ScaffoldAlgorithm(ds)
+      val engine = new ScaffoldEngine(eID, p, algorithm, ds)
+      drawInfo("Scaffold Example Engine", Seq(
+        ("════════════════════════════════════════", "══════════════════════════════════════"),
+        ("EngineId: ", eID),
+        ("Mirror Type: ", params.mirrorType),
+        ("Mirror Container: ", params.mirrorContainer)))
+
+      Valid(p, engine)
+    }.map(_._2).getOrElse(null.asInstanceOf[ScaffoldEngine])
   }
 
   // in case we don't want to use "apply", which is magically connected to the class's constructor

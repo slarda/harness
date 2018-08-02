@@ -28,12 +28,12 @@ import com.typesafe.scalalogging.LazyLogging
   * and sent the correct case class E extending Event of the extending
   * Engine. Queries work in a similar way. The Engine is a "Controller" in the MVC sense
   */
-abstract class Engine extends LazyLogging with JsonParser {
+abstract class Engine(params: GenericEngineParams) extends LazyLogging with JsonParser {
 
-  var engineId: String = _
-  private var mirroring: Mirroring = _
+  val engineId: String = params.engineId
+  private val mirroring: Mirroring = new FSMirroring(params.mirrorContainer.getOrElse(""))
   val serverHome = sys.env("HARNESS_HOME")
-  var modelContainer: String = _ // path to directory or place we can put a model file, not a file name.
+  val modelContainer: String = params.modelContainer.getOrElse("") // path to directory or place we can put a model file, not a file name.
 
   // Methods that must be overridden in extending Engines
 
@@ -98,18 +98,16 @@ abstract class Engine extends LazyLogging with JsonParser {
 
   def updateConfig(json: String): Validated[ValidateError, Boolean] = {
     logger.info("No config updates allowed for this Engine")
+    parseAndValidate[GenericEngineParams](json).andThen { p =>
+      val container = if (serverHome.tail == "/") serverHome else serverHome + "/"
+      modelContainer = p.modelContainer.getOrElse(container)
+      createResources(p)
+    }
     Valid(true)
   }
 
-  // todo: do we need these? seems like destroy is the only use and it doesn't need an abstract class method
-  /** Optional, used to stop Actors when destroying an Engine or other shutdown code */
-  // def start(): Engine = { logger.trace(s"Starting base Engine with engineId:$engineId"); this }
-  // def stop(): Unit = { logger.trace(s"Stopping base Engine with engineId:$engineId") }
-
   /** This returns information about a running Engine, any useful stats can be displayed in the CLI with
     * `harness status engine-id`. Typically overridden in child and not inherited.
-    * todo: can we combine the json output so this can be inherited to supply status for the data the Engine class
-    * manages and the extending Engine adds json to give stats about the data it manages?
     */
   def status(): Validated[ValidateError, String] = {
     logger.trace(s"Status of base Engine with engineId:$engineId")
