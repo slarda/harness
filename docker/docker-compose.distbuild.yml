@@ -1,0 +1,16 @@
+version: '3'
+services:
+  build-rest-server:
+    image: $SCALA_IMAGE
+    working_dir: /code/rest-server
+    command: bash make-harness-distribution.sh
+
+    environment:
+      - SDK_VERBOSE=yes
+
+    volumes:
+      - ../:/code
+
+      # cache volumes
+      - ~/.sbt:/root/.sbt
+      - ~/.ivy2:/root/.ivy2
