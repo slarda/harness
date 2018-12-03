@@ -197,7 +197,6 @@ class ElasticSearchClient[T] private (alias: String) extends SearchClient[T] wit
 
     if (rjv.nonEmpty) {
       //val responseJValue = parse(EntityUtils.toString(response.getEntity))
-      println(s"AAAAAAAAAAAAA${(rjv.get \ "_source")}")
       val result = (rjv.get \ "_source").values.asInstanceOf[Map[String, List[String]]]
       id -> result
     } else {
