@@ -37,7 +37,8 @@ import scala.language.reflectiveCalls
   *
   * @param engineId The Engine ID
   */
-class URNavHintingDataset(engineId: String, val store: Store) extends Dataset[URNavHintingEvent](engineId) with JsonParser {
+class URNavHintingDataset(engineId: String, val store: Store, val sharedDB: Boolean = false)
+  extends Dataset[URNavHintingEvent](engineId) with JsonParser {
 
   // todo: make sure to index the timestamp for descending ordering, and the name field for filtering
   private val activeJourneysDao = store.createDao[URNavHintingEvent]("active_journeys")
@@ -90,7 +91,8 @@ class URNavHintingDataset(engineId: String, val store: Store) extends Dataset[UR
   override def destroy(): Unit = {
     // todo: Yikes this cannot be used with the sharedDb or all data from all engines will be dropped!!!!!
     // must drop only the data from collections
-    store.drop //.dropDatabase(engineId)
+    if(!sharedDB) store.drop // shared intel has to be dropped through DB shell, not through Harness
+    // todo: could add reference counting so drop only works if no other engine is is using the db
   }
 
   // Parse, validate, drill into the different derivative event types, andThen(persist)?
