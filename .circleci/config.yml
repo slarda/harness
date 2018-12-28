@@ -33,7 +33,9 @@ jobs:
       -
         run:
           name: Build rest-server dist
-          command: make dist
+          command: |
+            find /root/.ivy2
+            make dist
       -
         save_cache:
           key: rest-api-{{ checksum "rest-server/build.sbt" }}
