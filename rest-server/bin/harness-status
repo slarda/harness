@@ -36,9 +36,9 @@ fi
 #
 if [ "${RESOURCE_TYPE}" = "engines" ]; then
   if [ -z ${RESOURCE_ID} ]; then
-    "${HARNESS_HOME}"/bin/engines.py status --all_engines "${USER_ARGS}" || exit $?
+    "${HARNESS_HOME}"/bin/engines.py status --all_engines ${USER_ARGS} || exit $?
   else
-    "${HARNESS_HOME}"/bin/engines.py status -e "${RESOURCE_ID}" "${USER_ARGS}" || exit $?
+    "${HARNESS_HOME}"/bin/engines.py status -e "${RESOURCE_ID}" ${USER_ARGS} || exit $?
   fi
 fi
 
@@ -47,8 +47,8 @@ fi
 #
 if [ "${RESOURCE_TYPE}" = "users" ]; then
   if [ -z "${RESOURCE_ID}" ]; then
-    "${HARNESS_HOME}"/bin/users.py status --all_users "${USER_ARGS}" || exit $?
+    "${HARNESS_HOME}"/bin/users.py status --all_users ${USER_ARGS} || exit $?
   else
-    "${HARNESS_HOME}"/bin/users.py status --user_id "${RESOURCE_ID}" "${USER_ARGS}"
+    "${HARNESS_HOME}"/bin/users.py status --user_id "${RESOURCE_ID}" ${USER_ARGS}
   fi
 fi
