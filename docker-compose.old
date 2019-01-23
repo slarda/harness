@@ -1,8 +1,15 @@
 version: '3'
 
 services:
-  
-  rest-server:
+
+  mongo:
+    image: mongo:3.2
+    ports:
+      - '27017:27017'
+    logging:
+      driver: none
+
+  router:
     build: ./rest-server
     ports:
       - '9090:9090'
@@ -15,10 +22,12 @@ services:
     volumes:
       - ./it/shared/logs:/app/logs
       - ./it/shared/data:/data
-   
-  mongo:
-    image: mongo:3.2
-    ports:
-      - '27017:27017'
-    logging:
-      driver: none
+
+  java_client:
+    build: ./java-sdk/example
+    environment:
+      REST_SERVER_HOST: "router"
+    depends_on:
+      - router
+    volumes:
+      - ./it/shared/data:/data
