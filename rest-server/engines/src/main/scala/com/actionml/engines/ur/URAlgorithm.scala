@@ -574,7 +574,21 @@ class URAlgorithm private (
   }
 
   private def getBlacklistedItemsMatchers(query: URQuery, userEvents: Seq[UREvent]): Seq[Matcher] = {
-    val queryBlacklist = query.blacklistItems.getOrElse(Seq.empty)
+
+    // blacklist things specified in the query plus the item itself for item-based queries
+    val queryBlacklistWithItem =  if(query.item.isDefined && query.returnSelf.getOrElse(true)) { // item-based and not returnSelf
+      query.blacklistItems.getOrElse(Seq.empty) :+ query.item.get
+    } else { // ok to return the item in the query when using item-based queries
+      query.blacklistItems.getOrElse(Seq.empty)
+    }
+
+    // now add the items in an item-set query to the blacklist if returnSelf is not true
+    val queryBlacklist = if(query.itemSet.isDefined && query.returnSelf.getOrElse(true)) { // item-based and not returnSelf
+      queryBlacklistWithItem ++ query.itemSet.get
+    } else { // ok to return the item in the query when using item-based queries
+      queryBlacklistWithItem
+    }
+
     val blacklistByUserHistory = userEvents.filter(event => blacklistEvents.contains(event.event)).map(_.targetEntityId.getOrElse(""))
     Seq(
       Matcher(
