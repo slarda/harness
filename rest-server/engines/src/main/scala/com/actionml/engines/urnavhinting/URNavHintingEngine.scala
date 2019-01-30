@@ -22,13 +22,12 @@ import cats.data.Validated.Valid
 import com.actionml.core.drawInfo
 import com.actionml.core.engine.{Engine, QueryResult}
 import com.actionml.core.jobs.{JobDescription, JobManager}
-import com.actionml.core.model.{EngineParams, Event, Query}
+import com.actionml.core.model.{EngineParams, Event, Query, Response}
 import com.actionml.core.store.Ordering._
 import com.actionml.core.store.backends.MongoStorage
 import com.actionml.core.store.indexes.annotations.Indexed
 import com.actionml.core.validate.{JsonSupport, ValidateError}
 import com.actionml.engines.urnavhinting.URNavHintingEngine.{URNavHintingEngineParams, URNavHintingEvent, URNavHintingQuery}
-import io.circe.Json
 import org.json4s.JValue
 
 import scala.concurrent.duration._
@@ -41,9 +40,8 @@ class URNavHintingEngine extends Engine with JsonSupport {
   private var params: URNavHintingEngineParams = _
 
   /** Initializing the Engine sets up all needed objects */
-  override def init(jsonConfig: String, update: Boolean = false): Validated[ValidateError, String] = {
+  override def init(jsonConfig: String, update: Boolean = false): Validated[ValidateError, Response] = {
     super.init(jsonConfig).andThen { _ =>
-
       parseAndValidate[URNavHintingEngineParams](jsonConfig).andThen { p =>
         params = p
         engineId = params.engineId
@@ -88,7 +86,7 @@ class URNavHintingEngine extends Engine with JsonSupport {
     }
   }
 
-  override def input(jsonEvent: String): Validated[ValidateError, String] = {
+  override def input(jsonEvent: String): Validated[ValidateError, Response] = {
     logger.trace("Got JSON body: " + jsonEvent)
     // validation happens as the input goes to the dataset
     //super.input(jsonEvent).andThen(_ => dataset.input(jsonEvent)).andThen { _ =>
@@ -99,30 +97,21 @@ class URNavHintingEngine extends Engine with JsonSupport {
   }
 
   // todo: should merge base engine status with URNavHintingEngine's status
-  override def status(): Validated[ValidateError, String] = {
-    import org.json4s.jackson.Serialization.write
-
+  override def status(): Validated[ValidateError, Response] = {
     logStatus(params)
-    Valid(s"""
-       |{
-       |    "engineParams": ${write(params)},
-       |    "jobStatuses": ${write[Map[String, JobDescription]](JobManager.getActiveJobDescriptions(engineId))}
-       |}
-     """.stripMargin)
+    Valid(URNavHintingEngineStatus(params, JobManager.getActiveJobDescriptions(engineId)))
   }
 
-  override def train(): Validated[ValidateError, String] = {
+  override def train(): Validated[ValidateError, Response] = {
     algo.train()
   }
 
   /** triggers parse, validation of the query then returns the result as JSONharness */
-  def query(jsonQuery: String): Validated[ValidateError, Json] = {
-    import io.circe.syntax._
-    import io.circe.generic.auto._
+  def query(jsonQuery: String): Validated[ValidateError, Response] = {
     logger.trace(s"Got a query JSON string: $jsonQuery")
     parseAndValidate[URNavHintingQuery](jsonQuery).andThen { query =>
       val result = algo.query(query)
-      Valid(result.asJson)
+      Valid(result)
     }
   }
 
@@ -185,7 +174,7 @@ object URNavHintingEngine {
 
   case class URNavHintingQueryResult(
       navHints: Seq[(String, Double)] = Seq.empty)
-    extends QueryResult {
+    extends Response with QueryResult {
 
     def toJson: String = {
       val jsonStart =
@@ -209,3 +198,5 @@ object URNavHintingEngine {
   }
 
 }
+
+case class URNavHintingEngineStatus(engineParams: URNavHintingEngineParams, jobStatuses: Map[String, JobDescription]) extends Response

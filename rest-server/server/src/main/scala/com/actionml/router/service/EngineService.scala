@@ -17,10 +17,8 @@
 
 package com.actionml.router.service
 
-import cats.implicits._
 import com.actionml.admin.Administrator
 import com.actionml.router.ActorInjectable
-import io.circe.parser._
 import scaldi.Injector
 
 /**
@@ -39,27 +37,27 @@ class EngineServiceImpl(implicit inj: Injector) extends EngineService{
   override def receive: Receive = {
     case GetEngine(engineId) =>
       log.info("Get engine, {}", engineId)
-      sender() ! admin.status(Some(engineId)).andThen(parse(_).toValidated)
+      sender() ! admin.status(engineId)
 
     case GetEngines =>
       log.info("Get one or all engine status")
-      sender() ! admin.status().andThen(parse(_).toValidated)
+      sender() ! admin.statuses()
 
     case CreateEngine(engineJson) =>
       log.info("Create new engine, {}", engineJson)
-      sender() ! admin.addEngine(engineJson).andThen(parse(_).toValidated)
+      sender() ! admin.addEngine(engineJson)
 
     case UpdateEngine(engineJson) =>
-      log.info(s"Update existing engine, ${engineJson}")
-      sender() ! admin.updateEngine(engineJson).andThen(parse(_).toValidated)
+      log.info(s"Update existing engine, $engineJson")
+      sender() ! admin.updateEngine(engineJson)
 
     case UpdateEngineWithTrain(engineId) =>
-      log.info(s"Update existing engine, ${engineId}")
-      sender() ! admin.updateEngineWithTrain(engineId).andThen(parse(_).toValidated)
+      log.info(s"Update existing engine, $engineId")
+      sender() ! admin.updateEngineWithTrain(engineId)
 
     case UpdateEngineWithImport(engineId, inputPath) =>
-      log.info(s"Update existing engine by importing, ${inputPath}")
-      sender() ! admin.updateEngineWithImport(engineId, inputPath).andThen(parse(_).toValidated)
+      log.info(s"Update existing engine by importing, $inputPath")
+      sender() ! admin.updateEngineWithImport(engineId, inputPath)
 
     /*
     case UpdateEngineWithConfig(engineId, engineJson, dataDelete, force, input) =>
@@ -73,7 +71,7 @@ class EngineServiceImpl(implicit inj: Injector) extends EngineService{
 
     case DeleteEngine(engineId) =>
       log.info("Delete existing engine, {}", engineId)
-      sender() ! admin.removeEngine(engineId).andThen(parse(_).toValidated)
+      sender() ! admin.removeEngine(engineId)
   }
 }
 
